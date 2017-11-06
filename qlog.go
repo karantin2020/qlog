@@ -1,9 +1,7 @@
 package qlog
 
 type Logger struct {
-	// The logs are `io.Copy`'d to this in a mutex. It's common to set this to a
-	// file, or leave it default which is `os.Stderr`. You can also set this to
-	// something more adventorous, such as logging to Kafka.
+	// Logs are written to that destination
 	Out io.Writer
 	// Hooks for the logger instance. These allow firing events based on logging
 	// levels and log entries. For example, to send errors to an error tracking
@@ -20,4 +18,8 @@ type Logger struct {
 	// to) `logrus.Info`, which allows Info(), Warn(), Error() and Fatal() to be
 	// logged.
 	Level Level
+	// Logger context
+	Context []Field
+	// Enable flag
+	Enable bool
 }

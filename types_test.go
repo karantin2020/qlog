@@ -1,6 +1,7 @@
-package qlog
+package qlog_test
 
 import (
+	"github.com/karantin2020/qlog"
 	"reflect"
 	"testing"
 )
@@ -8,11 +9,11 @@ import (
 func TestNewMapS(t *testing.T) {
 	tests := []struct {
 		name string
-		want *FlatMapS
+		want *qlog.FlatMapS
 	}{
 		{
 			"New FlatMapS",
-			&FlatMapS{
+			&qlog.FlatMapS{
 				[]string{},
 				[]string{},
 			},
@@ -20,7 +21,7 @@ func TestNewMapS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewMapS(); !reflect.DeepEqual(got, tt.want) {
+			if got := qlog.NewMapS(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewMapS() = %v, want %v", got, tt.want)
 			}
 		})
@@ -30,11 +31,11 @@ func TestNewMapS(t *testing.T) {
 func TestNewMapI(t *testing.T) {
 	tests := []struct {
 		name string
-		want *FlatMapI
+		want *qlog.FlatMapI
 	}{
 		{
 			"New FlatMapI",
-			&FlatMapI{
+			&qlog.FlatMapI{
 				[]string{},
 				[]interface{}{},
 			},
@@ -42,7 +43,7 @@ func TestNewMapI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewMapI(); !reflect.DeepEqual(got, tt.want) {
+			if got := qlog.NewMapI(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewMapI() = %v, want %v", got, tt.want)
 			}
 		})
@@ -62,7 +63,7 @@ func TestFlatMapS_Add(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *FlatMapS
+		want    *qlog.FlatMapS
 		wantErr bool
 	}{
 		{
@@ -75,7 +76,7 @@ func TestFlatMapS_Add(t *testing.T) {
 				"foo",
 				"bar",
 			},
-			&FlatMapS{
+			&qlog.FlatMapS{
 				[]string{"new", "foo"},
 				[]string{"one", "bar"},
 			},
@@ -91,7 +92,7 @@ func TestFlatMapS_Add(t *testing.T) {
 				"new",
 				"two",
 			},
-			&FlatMapS{
+			&qlog.FlatMapS{
 				[]string{"new"},
 				[]string{"two"},
 			},
@@ -107,7 +108,7 @@ func TestFlatMapS_Add(t *testing.T) {
 				"new",
 				"two",
 			},
-			&FlatMapS{
+			&qlog.FlatMapS{
 				[]string{"new"},
 				[]string{"one"},
 			},
@@ -116,7 +117,7 @@ func TestFlatMapS_Add(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &FlatMapS{
+			m := &qlog.FlatMapS{
 				K: tt.fields.K,
 				V: tt.fields.V,
 			}
@@ -141,7 +142,7 @@ func TestFlatMapI_Add(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *FlatMapI
+		want    *qlog.FlatMapI
 		wantErr bool
 	}{
 		{
@@ -154,7 +155,7 @@ func TestFlatMapI_Add(t *testing.T) {
 				"foo",
 				"bar",
 			},
-			&FlatMapI{
+			&qlog.FlatMapI{
 				[]string{"new", "foo"},
 				[]interface{}{"one", "bar"},
 			},
@@ -170,7 +171,7 @@ func TestFlatMapI_Add(t *testing.T) {
 				"new",
 				"two",
 			},
-			&FlatMapI{
+			&qlog.FlatMapI{
 				[]string{"new"},
 				[]interface{}{"two"},
 			},
@@ -186,7 +187,7 @@ func TestFlatMapI_Add(t *testing.T) {
 				"new",
 				"two",
 			},
-			&FlatMapI{
+			&qlog.FlatMapI{
 				[]string{"new"},
 				[]interface{}{"one"},
 			},
@@ -195,7 +196,7 @@ func TestFlatMapI_Add(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &FlatMapI{
+			m := &qlog.FlatMapI{
 				K: tt.fields.K,
 				V: tt.fields.V,
 			}

@@ -1,5 +1,7 @@
 package qlog
 
+type Formatter func(*Event)
+
 // FlatMapS structure to store map[string]string-like data
 type FlatMapS struct {
 	K []string

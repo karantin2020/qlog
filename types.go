@@ -1,6 +1,17 @@
 package qlog
 
-type Formatter func(*Event)
+import (
+	"io"
+)
+
+type FormatWriter interface {
+	io.Writer
+	Format(*Entry)
+}
+
+type Formatter func(*Entry)
+type Hook func(*Entry)
+type Output func(*Entry)
 
 // FlatMapS structure to store map[string]string-like data
 type FlatMapS struct {

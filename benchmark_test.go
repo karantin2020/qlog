@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"testing"
-	// "time"
 )
 
 var (

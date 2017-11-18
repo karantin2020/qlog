@@ -166,6 +166,15 @@ func (n *Notepad) copy() *Notepad {
 	return &newnp
 }
 
+func (n *Notepad) free() {
+	for j := range n.Loggers {
+		(*n.Loggers[j]).free()
+	}
+	for i := range n.CtxBuffer {
+		n.CtxBuffer[i].Free()
+	}
+}
+
 func (np *Notepad) AddHook(lvl Level, h Hook) {
 	for t, logger := range np.Loggers {
 		if lvl >= Level(t) {
@@ -222,6 +231,12 @@ func (l *Logger) copy() *Logger {
 	newl.CtxBuffer = make([]*buffer.Buffer, len(l.CtxBuffer), cap(l.CtxBuffer))
 	copy(newl.CtxBuffer, l.CtxBuffer)
 	return &newl
+}
+
+func (l *Logger) free() {
+	for i := range l.CtxBuffer {
+		l.CtxBuffer[i].Free()
+	}
 }
 
 func (l *Logger) AddField(f F) {

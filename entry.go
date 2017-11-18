@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/karantin2020/qlog/buffer"
-	// "runtime"
 	"sync"
 	"time"
 )
@@ -180,7 +179,7 @@ func (e *Entry) Process() {
 	}
 	if len(e.Logger.Output) == 1 {
 		e.Logger.Output[0](e)
-	} else {
+	} else if len(e.Logger.Output) > 1 {
 		var wg sync.WaitGroup
 		for _, out := range e.Logger.Output {
 			wg.Add(1)

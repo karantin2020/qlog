@@ -8,7 +8,8 @@ import (
 	"io"
 	"os"
 	"strings"
-	// "sync/atomic"
+	"sync"
+	"unicode"
 	"unsafe"
 )
 
@@ -21,15 +22,45 @@ type TemplateOptions struct {
 	MessageName   string
 	ErrorName     string
 	TimestampName string
+
+	upperTags []bool
 }
 
-type counter struct {
-	npFields uint64
-	lsFields [7]uint64
+var (
+	bPool *sync.Pool
+)
+
+type iBuffer struct {
+	bb [][]byte
+	pl PairList
 }
 
-func (c counter) changed(e *Entry) bool {
-	return false
+func init() {
+	bPool = &sync.Pool{
+		New: func() interface{} {
+			return &iBuffer{
+				make([][]byte, 0, 20),
+				make(PairList, 0, 10),
+			}
+		},
+	}
+}
+
+func newBuffer() *iBuffer {
+	buf := bPool.Get().(*iBuffer)
+	buf.reset()
+	return buf
+}
+
+func (b *iBuffer) reset() {
+	for i := range b.bb {
+		b.bb[i] = nil
+	}
+	b.pl = b.pl[:0]
+}
+
+func (b *iBuffer) free() {
+	bPool.Put(b)
 }
 
 type Pair struct {
@@ -64,6 +95,16 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 		fn(options)
 	}
 	t, err := fasttemplate.NewTemplate(template, "${", "}")
+	options.upperTags = make([]bool, len(t.Tags))
+	for k := range t.Tags {
+		for _, r := range t.Tags[k] {
+			if unicode.IsUpper(r) {
+				options.upperTags[k] = true
+				t.Tags[k] = strings.ToLower(t.Tags[k])
+			}
+			break
+		}
+	}
 	if err != nil {
 		panic("unexpected error when parsing template: " + err.Error())
 	}
@@ -78,27 +119,39 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 			panic("OutLevel is higher than errLevel")
 		}
 		tmpOut := func(wio io.Writer) Output {
+			// tfields := make([][]byte, len(t.Tags))
+			// fields := make(PairList, 0, 10)
 			return func(e *Entry) {
-				tfields := make([][]byte, len(t.Tags))
-				fields := make(PairList, 0, 10)
-				GetEntryFields(e, t.Tags, &tfields, &fields)
+				// for ti := range tfields {
+				// 	tfields[ti] = nil
+				// }
+				// fields = fields[:0]
+
+				// tfields := make([][]byte, len(t.Tags))
+				// fields := make(PairList, 0, 10)
+
+				buf := newBuffer()
+				buf.bb = buf.bb[:len(t.Tags)]
+
+				GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl)
 				for i, t := range t.Tags {
 					if t == options.FieldsName {
-						tfields[i] = Str2Bytes(fields.String())
+						buf.bb[i] = Str2Bytes(buf.pl.String())
 					}
 					if t == options.MessageName {
-						tfields[i] = Str2Bytes(e.Message)
+						buf.bb[i] = Str2Bytes(e.Message)
 					}
 				}
 				i := 0
 				_, err := t.ExecuteFunc(wio, func(w io.Writer, tag string) (int, error) {
 					i += 1
-					w.Write(tfields[i-1])
-					return len(tfields[i-1]), nil
+					w.Write(buf.bb[i-1])
+					return len(buf.bb[i-1]), nil
 				})
 				if err != nil {
 					panic(fmt.Sprintf("unexpected error: %s", err))
 				}
+				buf.free()
 			}
 		}
 		for tlv, logger := range np.Loggers {
@@ -125,13 +178,18 @@ func newTemplateOptions() *TemplateOptions {
 	}
 }
 
-func GetEntryFields(e *Entry, tags []string, tfields *[][]byte, fields *PairList) {
+func GetEntryFields(e *Entry, tags []string, upperTags []bool, tfields *[][]byte, fields *PairList) {
+
 	addFld := func(data []Field, encValues []*buffer.Buffer) {
 		for j, v := range data {
 			if i, ok := stringInSlice(v.Key, tags); ok {
-				(*tfields)[i] = bytes.Trim(encValues[j].Bytes(), "\"")
-			} else if i, ok := stringInSlice(strings.ToUpper(v.Key), tags); ok {
-				(*tfields)[i] = bytes.Trim(bytes.ToUpper(encValues[j].Bytes()), "\"")
+				if upperTags[i] {
+					(*tfields)[i] = bytes.ToUpper(encValues[j].Bytes()[1:])
+					(*tfields)[i] = (*tfields)[i][0 : len((*tfields)[i])-1]
+				} else {
+					(*tfields)[i] = encValues[j].Bytes()[1:]
+					(*tfields)[i] = (*tfields)[i][0 : len((*tfields)[i])-1]
+				}
 			} else {
 				(*fields) = append((*fields), Pair{Str2Bytes(v.Key), encValues[j].Bytes()})
 			}

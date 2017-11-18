@@ -91,6 +91,10 @@ Output is:
 2017-11-19T01:15:42.822+0500    info    failed to fetch 'URL'   {"service":"new","source":"after"}
 ```
 
+qlog.Template takes template string as the first argument. Substrings in ${...} are interpreted 
+as field names or reserved words (fields, message...). If fields name (${...}) is in capital case
+then output will be formatted in capital case too (see level name in examples).
+
 See documentation in code.
 
 ## Performance

@@ -3,8 +3,8 @@ package qlog
 import (
 	"bytes"
 	"fmt"
+	"github.com/karantin2020/fasttemplate"
 	"github.com/karantin2020/qlog/buffer"
-	"github.com/valyala/fasttemplate"
 	"io"
 	"os"
 	"strings"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/karantin2020/qlog/buffer"
+	"os"
 	"sync"
 	"time"
 )
@@ -53,6 +54,7 @@ func (l *Logger) NewEntry() *Entry {
 	entry, _ := entryPool.Get().(*Entry)
 	entry.Reset()
 	entry.Time = time.Now()
+	entry.Message = ""
 	entry.Logger = l
 	entry.Level = l.Level
 	return entry
@@ -61,6 +63,7 @@ func (l *Logger) NewEntry() *Entry {
 func (e *Entry) Reset() {
 	e.Data = e.Data[:0]
 	e.Buffer = e.Buffer[:0]
+	e.ErrorF = nil
 }
 
 func (e *Entry) Fields(fields ...Field) {
@@ -109,42 +112,56 @@ func (e *Entry) Warn(msg string) {
 	e.Msg(msg)
 }
 
-func (e *Entry) errMsg(msg string) {
+func (e *Entry) errMsg(msg string, panicErr, exitErr bool) {
 	e.Level = e.Logger.Level
-	if e.ErrorF == nil {
-		e.ErrorF = e.Logger.Notepad.Options.ErrorFunc(msg)
-	} else {
-		e.Message = msg
-	}
+	// if e.ErrorF == nil {
+	e.ErrorF = e.Logger.Notepad.Options.ErrorFunc(msg)
+	e.AddField(F{e.Logger.Notepad.Options.ErrorFieldName, e.ErrorF})
+	// } else {
+	e.Message = e.ErrorF.Error()
+	// }
 	e.Process()
+	if panicErr {
+		panic(msg)
+	} else if exitErr {
+		os.Exit(1)
+	}
+
 }
 
 func (e *Entry) Error(msg string) {
 	if e.Logger == nil || e.Logger != e.Logger.Notepad.ERROR {
 		return
 	}
-	e.errMsg(msg)
+	e.errMsg(msg, false, false)
 }
 
 func (e *Entry) Critical(msg string) {
 	if e.Logger == nil || e.Logger != e.Logger.Notepad.CRITICAL {
 		return
 	}
-	e.errMsg(msg)
+	// e.errMsg(msg)
+	if e.Logger.Notepad.DEBUG != nil {
+		e.errMsg(msg, true, false)
+	} else {
+		e.errMsg(msg, false, false)
+	}
 }
 
 func (e *Entry) Panic(msg string) {
 	if e.Logger == nil || e.Logger != e.Logger.Notepad.PANIC {
 		return
 	}
-	e.errMsg(msg)
+	// e.errMsg(msg)
+	e.errMsg(msg, true, false)
 }
 
 func (e *Entry) Fatal(msg string) {
 	if e.Logger == nil || e.Logger != e.Logger.Notepad.FATAL {
 		return
 	}
-	e.errMsg(msg)
+	e.errMsg(msg, false, true)
+	// os.Exit(1)
 }
 
 func (e *Entry) Log(msg string) {

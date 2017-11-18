@@ -33,6 +33,7 @@ var (
 type iBuffer struct {
 	bb [][]byte
 	pl PairList
+	fb []byte
 }
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 			return &iBuffer{
 				make([][]byte, 0, 20),
 				make(PairList, 0, 10),
+				make([]byte, 0, 512),
 			}
 		},
 	}
@@ -57,6 +59,7 @@ func (b *iBuffer) reset() {
 		b.bb[i] = nil
 	}
 	b.pl = b.pl[:0]
+	b.fb = b.fb[:0]
 }
 
 func (b *iBuffer) free() {
@@ -89,6 +92,22 @@ func (pl PairList) String() string {
 	return s
 }
 
+func (pl PairList) iString(fb []byte) []byte {
+	fb = append(fb, Str2Bytes("{")...)
+	for i, _ := range pl {
+		fb = append(fb, Str2Bytes("\"")...)
+		fb = append(fb, pl[i].Key...)
+		fb = append(fb, Str2Bytes("\"")...)
+		fb = append(fb, Str2Bytes(":")...)
+		fb = append(fb, pl[i].Value...)
+		if i < len(pl)-1 {
+			fb = append(fb, Str2Bytes(",")...)
+		}
+	}
+	fb = append(fb, Str2Bytes("}")...)
+	return fb
+}
+
 func Template(template string, opts ...func(*TemplateOptions) error) func(np *Notepad) {
 	options := newTemplateOptions()
 	for _, fn := range opts {
@@ -119,24 +138,13 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 			panic("OutLevel is higher than errLevel")
 		}
 		tmpOut := func(wio io.Writer) Output {
-			// tfields := make([][]byte, len(t.Tags))
-			// fields := make(PairList, 0, 10)
 			return func(e *Entry) {
-				// for ti := range tfields {
-				// 	tfields[ti] = nil
-				// }
-				// fields = fields[:0]
-
-				// tfields := make([][]byte, len(t.Tags))
-				// fields := make(PairList, 0, 10)
-
 				buf := newBuffer()
 				buf.bb = buf.bb[:len(t.Tags)]
-
 				GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl)
 				for i, t := range t.Tags {
 					if t == options.FieldsName {
-						buf.bb[i] = Str2Bytes(buf.pl.String())
+						buf.bb[i] = buf.pl.iString(buf.fb)
 					}
 					if t == options.MessageName {
 						buf.bb[i] = Str2Bytes(e.Message)
@@ -145,8 +153,7 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 				i := 0
 				_, err := t.ExecuteFunc(wio, func(w io.Writer, tag string) (int, error) {
 					i += 1
-					w.Write(buf.bb[i-1])
-					return len(buf.bb[i-1]), nil
+					return w.Write(buf.bb[i-1])
 				})
 				if err != nil {
 					panic(fmt.Sprintf("unexpected error: %s", err))

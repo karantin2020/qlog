@@ -1,4 +1,4 @@
-# qLog
+# qLog [![Build Status](https://jarvi.ga/api/badges/karantin2020/qlog/status.svg)](https://jarvi.ga/karantin2020/qlog)
 
 Blazing fast, structured, leveled logging in Go.
 Like zap or zerolog but more flexible

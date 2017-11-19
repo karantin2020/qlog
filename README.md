@@ -1,4 +1,4 @@
-# qLog [![Build Status](https://jarvi.ga/api/badges/karantin2020/qlog/status.svg)](https://jarvi.ga/karantin2020/qlog)
+# qLog ![Build Status](https://jarvi.ga/api/badges/karantin2020/qlog/status.svg)
 
 Blazing fast, structured, leveled logging in Go.
 Like zap or zerolog but more flexible
@@ -100,6 +100,23 @@ See documentation in code.
 ## Performance
 
 For now only text output is implemented. It's performance is equal to uber/zap and zerolog.
+
+Benchmark results:
+
+```bash
+go test -benchmem  -bench=.
+goos: linux
+goarch: amd64
+pkg: github.com/karantin2020/qlog
+BenchmarkLogNoOutput-3   	20000000	        60.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogEmpty-3      	 5000000	       425 ns/op	      48 B/op	       3 allocs/op
+BenchmarkLogDisabled-3   	2000000000	         1.86 ns/op	       0 B/op	       0 allocs/op
+BenchmarkInfo-3          	 5000000	       377 ns/op	      48 B/op	       3 allocs/op
+BenchmarkFields-3        	 3000000	       634 ns/op	      64 B/op	       5 allocs/op
+BenchmarkWithFields-3    	 3000000	       439 ns/op	      48 B/op	       3 allocs/op
+PASS
+ok github.com/karantin2020/qlog 14.223s
+```
 
 ## Development Status: Stable
 

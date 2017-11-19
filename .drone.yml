@@ -1,0 +1,16 @@
+workspace:
+  base: /go
+  path: src/github.com/karantin2020/qlog
+
+pipeline:
+  test1.8:
+    group: tests
+    image: golang:1.8.5-alpine3.6
+    commands:
+      - go test -v
+      
+  test1.9:
+    group: tests
+    image: golang:1.9.2-alpine3.6
+    commands:
+      - go test -v

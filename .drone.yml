@@ -8,3 +8,9 @@ pipeline:
     image: golang:1.9.2-alpine3.6
     commands:
       - go test -v
+
+  test1.9:
+    group: benchmarks
+    image: golang:1.9.2-alpine3.6
+    commands:
+      - go test -benchmem  -bench=.

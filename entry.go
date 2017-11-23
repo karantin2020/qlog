@@ -54,13 +54,16 @@ func (l *Logger) NewEntry() *Entry {
 	entry, _ := entryPool.Get().(*Entry)
 	entry.Reset()
 	entry.Time = time.Now()
-	entry.Message = ""
 	entry.Logger = l
 	entry.Level = l.Level
 	return entry
 }
 
 func (e *Entry) Reset() {
+	e.Logger = nil
+	e.Time = time.Time{}
+	e.Level = DebugLevel
+	e.Message = ""
 	e.Data = e.Data[:0]
 	e.Buffer = e.Buffer[:0]
 	e.ErrorF = nil

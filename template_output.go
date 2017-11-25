@@ -115,6 +115,8 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 	}
 	t, err := fasttemplate.NewTemplate(template, "${", "}")
 	options.upperTags = make([]bool, len(t.Tags))
+	// Assumption that all tags with starting upper case letter
+	// have all upper case letters
 	for k := range t.Tags {
 		for _, r := range t.Tags[k] {
 			if unicode.IsUpper(r) {

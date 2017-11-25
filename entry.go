@@ -61,8 +61,8 @@ func (l *Logger) NewEntry() *Entry {
 
 func (e *Entry) Reset() {
 	e.Logger = nil
-	e.Time = time.Time{}
-	e.Level = DebugLevel
+	// e.Time = time.Time{}
+	// e.Level = DebugLevel
 	e.Message = ""
 	e.Data = e.Data[:0]
 	e.Buffer = e.Buffer[:0]

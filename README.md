@@ -106,18 +106,18 @@ For now only text output is implemented. It's performance is equal to uber/zap a
 Benchmark results:
 
 ```bash
-go test -benchmem  -bench=.
+$ go test -benchmem  -bench=.
 goos: linux
 goarch: amd64
 pkg: github.com/karantin2020/qlog
-BenchmarkLogNoOutput-3   	20000000	        60.8 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLogEmpty-3      	 5000000	       425 ns/op	      48 B/op	       3 allocs/op
-BenchmarkLogDisabled-3   	2000000000	         1.86 ns/op	       0 B/op	       0 allocs/op
-BenchmarkInfo-3          	 5000000	       377 ns/op	      48 B/op	       3 allocs/op
-BenchmarkFields-3        	 3000000	       634 ns/op	      64 B/op	       5 allocs/op
-BenchmarkWithFields-3    	 3000000	       439 ns/op	      48 B/op	       3 allocs/op
+BenchmarkLogNoOutput-3   	20000000	        57.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogEmpty-3      	 5000000	       307 ns/op	      40 B/op	       2 allocs/op
+BenchmarkLogDisabled-3   	1000000000	         1.80 ns/op	       0 B/op	       0 allocs/op
+BenchmarkInfo-3          	 5000000	       282 ns/op	      40 B/op	       2 allocs/op
+BenchmarkFields-3        	 3000000	       460 ns/op	      56 B/op	       4 allocs/op
+BenchmarkWithFields-3    	 5000000	       251 ns/op	      40 B/op	       2 allocs/op
 PASS
-ok github.com/karantin2020/qlog 14.223s
+ok github.com/karantin2020/qlog 10.259s
 ```
 
 ## Development Status: Stable

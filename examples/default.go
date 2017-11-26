@@ -6,14 +6,14 @@ import (
 )
 
 func example_default() {
-	log.Debug("failed to fetch URL")
-	log.Info("failed to fetch URL")
-	log.Error("failed to fetch URL")
+	log.Debug("Debug: failed to fetch URL")
+	log.Info("Info: failed to fetch URL")
+	log.Error("Error: failed to fetch URL")
 	log.INFO.Fields(
 		qlog.F{"service", "new"},
 		qlog.F{"source", "after"},
-	).Msgf("failed to fetch %s", "URL")
-	log.Warn("failed to fetch URL")
-	log.Critical("failed to fetch URL")
-	// log.Panic("failed to fetch URL")
+	).Msgf("Info: failed to fetch %s", "URL")
+	log.Warn("Warn: failed to fetch URL")
+	log.Critical("Critical: failed to fetch URL")
+	// log.Panic("Panic: failed to fetch URL")
 }

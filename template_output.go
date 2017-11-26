@@ -193,9 +193,11 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 				buf.bb = buf.bb[:len(t.Tags)]
 				if c, ok := cache.fromCache(e.Logger); ok {
 					c.copyTo(buf)
+					GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl, true)
 				} else {
-					GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl)
+					GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl, false)
 					cache.toCache(e.Logger, buf)
+					GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl, true)
 				}
 				for i, t := range t.Tags {
 					if t == options.FieldsName {
@@ -240,7 +242,7 @@ func newTemplateOptions() *TemplateOptions {
 	}
 }
 
-func GetEntryFields(e *Entry, tags []string, upperTags []bool, tfields *[][]byte, fields *PairList) {
+func GetEntryFields(e *Entry, tags []string, upperTags []bool, tfields *[][]byte, fields *PairList, cached bool) {
 
 	addFld := func(data []Field, encValues []*buffer.Buffer) {
 		for j, v := range data {
@@ -257,9 +259,12 @@ func GetEntryFields(e *Entry, tags []string, upperTags []bool, tfields *[][]byte
 			}
 		}
 	}
-	addFld(e.Logger.Notepad.Context, e.Logger.Notepad.CtxBuffer)
-	addFld(e.Logger.Context, e.Logger.CtxBuffer)
-	addFld(e.Data, e.Buffer)
+	if !cached {
+		addFld(e.Logger.Notepad.Context, e.Logger.Notepad.CtxBuffer)
+		addFld(e.Logger.Context, e.Logger.CtxBuffer)
+	} else {
+		addFld(e.Data, e.Buffer)
+	}
 }
 
 func stringInSlice(a string, list []string) (int, bool) {

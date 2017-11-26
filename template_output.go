@@ -40,9 +40,9 @@ func init() {
 	bPool = &sync.Pool{
 		New: func() interface{} {
 			return &iBuffer{
-				make([][]byte, 0, 20),
-				make(PairList, 0, 10),
-				make([]byte, 0, 512),
+				bb: make([][]byte, 0, 20),
+				pl: make(PairList, 0, 10),
+				fb: make([]byte, 0, 512),
 			}
 		},
 	}
@@ -93,19 +93,63 @@ func (pl PairList) String() string {
 }
 
 func (pl PairList) iString(fb []byte) []byte {
-	fb = append(fb, Str2Bytes("{")...)
+	// write "{"
+	fb = append(fb, 123)
 	for i, _ := range pl {
-		fb = append(fb, Str2Bytes("\"")...)
+		// write "\""
+		fb = append(fb, 34)
 		fb = append(fb, pl[i].Key...)
-		fb = append(fb, Str2Bytes("\"")...)
-		fb = append(fb, Str2Bytes(":")...)
+		// write "\""
+		fb = append(fb, 34)
+		// write ":"
+		fb = append(fb, 58)
 		fb = append(fb, pl[i].Value...)
 		if i < len(pl)-1 {
-			fb = append(fb, Str2Bytes(",")...)
+			// write ","
+			fb = append(fb, 44)
 		}
 	}
-	fb = append(fb, Str2Bytes("}")...)
+	// write "}"
+	fb = append(fb, 125)
 	return fb
+}
+
+type cacheBuffer struct {
+	tbuf [][]byte
+	fbuf PairList
+}
+
+type cacheList struct {
+	loggers []*Logger
+	buffer  []*cacheBuffer
+}
+
+// Assume that every logger and it's parent notepad have immutable fields lists.
+// Their fields lists can be changed only by creating new instances of
+// logger and it's parent notepad
+func (cl *cacheList) fromCache(l *Logger) (*cacheBuffer, bool) {
+	for i, ll := range cl.loggers {
+		if ll == l {
+			return cl.buffer[i], true
+		}
+	}
+	return nil, false
+}
+
+func (cl *cacheList) toCache(l *Logger, ib *iBuffer) {
+	cl.loggers = append(cl.loggers, l)
+	cl.buffer = append(cl.buffer, &cacheBuffer{})
+	cl.buffer[len(cl.buffer)-1].copyFrom(ib)
+}
+
+func (cb *cacheBuffer) copyTo(ib *iBuffer) {
+	copy(ib.bb, cb.tbuf)
+	ib.pl = append(ib.pl, cb.fbuf...)
+}
+
+func (cb *cacheBuffer) copyFrom(ib *iBuffer) {
+	cb.tbuf = append(cb.tbuf, ib.bb...)
+	cb.fbuf = append(cb.fbuf, ib.pl...)
 }
 
 func Template(template string, opts ...func(*TemplateOptions) error) func(np *Notepad) {
@@ -115,6 +159,9 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 	}
 	t, err := fasttemplate.NewTemplate(template, "${", "}")
 	options.upperTags = make([]bool, len(t.Tags))
+	if err != nil {
+		panic("unexpected error when parsing template: " + err.Error())
+	}
 	// Assumption that all tags with starting upper case letter
 	// have all upper case letters
 	for k := range t.Tags {
@@ -126,8 +173,9 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 			break
 		}
 	}
-	if err != nil {
-		panic("unexpected error when parsing template: " + err.Error())
+	cache := &cacheList{
+		loggers: []*Logger{},
+		buffer:  []*cacheBuffer{},
 	}
 	return func(np *Notepad) {
 		if options.OutLevel > _maxLevel || options.OutLevel < _minLevel || options.OutLevel < np.Level {
@@ -143,7 +191,12 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 			return func(e *Entry) {
 				buf := newBuffer()
 				buf.bb = buf.bb[:len(t.Tags)]
-				GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl)
+				if c, ok := cache.fromCache(e.Logger); ok {
+					c.copyTo(buf)
+				} else {
+					GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl)
+					cache.toCache(e.Logger, buf)
+				}
 				for i, t := range t.Tags {
 					if t == options.FieldsName {
 						buf.bb[i] = buf.pl.iString(buf.fb)

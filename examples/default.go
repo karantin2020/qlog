@@ -15,5 +15,5 @@ func example_default() {
 	).Msgf("failed to fetch %s", "URL")
 	log.Warn("failed to fetch URL")
 	log.Critical("failed to fetch URL")
-	log.Panic("failed to fetch URL")
+	// log.Panic("failed to fetch URL")
 }

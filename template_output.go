@@ -76,13 +76,13 @@ func (pl PairList) String() string {
 	bb.Reset()
 	bb.Write(Str2Bytes("{"))
 	for i, _ := range pl {
-		bb.Write(Str2Bytes("\""))
+		bb.Write([]byte{'"'})
 		bb.Write(pl[i].Key)
-		bb.Write(Str2Bytes("\""))
-		bb.Write(Str2Bytes(":"))
+		bb.Write([]byte{'"'})
+		bb.Write([]byte{':'})
 		bb.Write(pl[i].Value)
 		if i < len(pl)-1 {
-			bb.Write(Str2Bytes(","))
+			bb.Write([]byte{','})
 		}
 	}
 	bb.Write(Str2Bytes("}"))

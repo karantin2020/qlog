@@ -61,6 +61,10 @@ func (b *iBuffer) reset() {
 }
 
 func (b *iBuffer) free() {
+	for i := range b.bbt {
+		b.bbt[i] = nil
+	}
+	b.reset()
 	bPool.Put(b)
 }
 

@@ -8,6 +8,7 @@ import (
 
 var (
 	errExample  = errors.New("fail")
+	errMsg      = "fail"
 	fakeMessage = "Test logging, but use a somewhat realistic message length."
 )
 
@@ -66,6 +67,22 @@ func BenchmarkInfo(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			log.Info(fakeMessage)
+		}
+	})
+}
+
+func BenchmarkError(b *testing.B) {
+	log := New(InfoLevel).
+		Timestamp().
+		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
+			topts.ErrHandle = ioutil.Discard
+			topts.OutHandle = ioutil.Discard
+			return nil
+		}))
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			log.Error(errMsg)
 		}
 	})
 }

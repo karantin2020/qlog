@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	// "github.com/karantin2020/qlog/buffer"
-	"github.com/pkg/errors"
+	"errors"
 	"time"
 )
 

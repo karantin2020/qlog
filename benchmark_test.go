@@ -70,7 +70,23 @@ func BenchmarkInfo(b *testing.B) {
 	})
 }
 
-func BenchmarkFields(b *testing.B) {
+func BenchmarkInfoLower(b *testing.B) {
+	log := New(InfoLevel).
+		Timestamp().
+		SetOutput(Template("${time}\t${level}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
+			topts.ErrHandle = ioutil.Discard
+			topts.OutHandle = ioutil.Discard
+			return nil
+		}))
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			log.Info(fakeMessage)
+		}
+	})
+}
+
+func BenchmarkOneField(b *testing.B) {
 	log := New(InfoLevel).
 		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
@@ -82,8 +98,63 @@ func BenchmarkFields(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			log.INFO.Fields(
-				F{"service", "new"},
-				F{"source", "after"},
+				F{Key: "service", Value: "new"},
+			).Msg(fakeMessage)
+		}
+	})
+}
+
+func BenchmarkTwoFields(b *testing.B) {
+	log := New(InfoLevel).
+		Timestamp().
+		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
+			topts.ErrHandle = ioutil.Discard
+			topts.OutHandle = ioutil.Discard
+			return nil
+		}))
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			log.INFO.Fields(
+				F{Key: "service", Value: "new"},
+				F{Key: "source", Value: "after"},
+			).Msg(fakeMessage)
+		}
+	})
+}
+
+func BenchmarkOneFieldLower(b *testing.B) {
+	log := New(InfoLevel).
+		Timestamp().
+		SetOutput(Template("${time}\t${level}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
+			topts.ErrHandle = ioutil.Discard
+			topts.OutHandle = ioutil.Discard
+			return nil
+		}))
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			log.INFO.Fields(
+				F{Key: "service", Value: "new"},
+			).Msg(fakeMessage)
+		}
+	})
+}
+
+func BenchmarkTwoFieldsLower(b *testing.B) {
+	log := New(InfoLevel).
+		Timestamp().
+		SetOutput(Template("${time}\t${level}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
+			topts.ErrHandle = ioutil.Discard
+			topts.OutHandle = ioutil.Discard
+			return nil
+		}))
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			log.INFO.Fields(
+				F{Key: "service", Value: "new"},
+				F{Key: "source", Value: "after"},
 			).Msg(fakeMessage)
 		}
 	})
@@ -93,8 +164,8 @@ func BenchmarkWithFields(b *testing.B) {
 	log := New(InfoLevel).
 		Timestamp().
 		WithFields(
-			F{"service", "new"},
-			F{"source", "after"},
+			F{Key: "service", Value: "new"},
+			F{Key: "source", Value: "after"},
 		).
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard

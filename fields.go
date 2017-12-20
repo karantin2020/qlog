@@ -1,18 +1,22 @@
 package qlog
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/karantin2020/qlog/buffer"
+	// "github.com/karantin2020/qlog/buffer"
 	"math"
 	"strconv"
 	"time"
 	"unicode/utf8"
 )
 
-type F = Field
+type F struct {
+	Key   string
+	Value interface{}
+}
 
 func (e *Entry) AddField(f F) {
-	AddField(f, &e.Data, &e.Buffer, &e.Logger.Notepad.Options)
+	AddField(f, &e.Data, &e.Logger.Notepad.Options)
 }
 
 func (l *Logger) Fields(flds ...F) *Entry {
@@ -23,102 +27,107 @@ func (l *Logger) Fields(flds ...F) *Entry {
 	return e
 }
 
-func AddField(f F, data *[]Field, buffer *[]*buffer.Buffer, opts *LogConfig) {
-	dst := bufferPool.Get()
-	found := false
+func AddField(f F, data *[]Field, opts *LogConfig) {
+	var (
+		dst   *bytes.Buffer
+		found bool
+	)
 	for i, fld := range *data {
 		if fld.Key == f.Key {
-			(*data)[i].Value = f.Value
-			dst.Free()
-			dst = (*buffer)[i]
-			dst.Reset()
+			dst = &(*data)[i].Buffer
 			found = true
+			break
 		}
 	}
 	if !found {
-		*data = append(*data, f)
+		*data = append(*data, Field{Key: f.Key, Value: f.Value})
 	}
+	dst = &(*data)[len(*data)-1].Buffer
+	dst.Reset()
+	buf := bytesPool.Get().(*[]byte)
+	*buf = (*buf)[:0]
 	switch val := f.Value.(type) {
 	case string:
-		dst.AppendBytes(AppendString(dst.Bytes(), val))
+		dst.Write(AppendString(*buf, val))
 	case []byte:
-		dst.AppendBytes(AppendBytes(dst.Bytes(), val))
+		dst.Write(AppendBytes(*buf, val))
 	case error:
-		dst.AppendBytes(AppendError(dst.Bytes(), val))
+		dst.Write(AppendError(*buf, val))
 	case []error:
-		dst.AppendBytes(AppendErrors(dst.Bytes(), val))
+		dst.Write(AppendErrors(*buf, val))
 	case bool:
-		dst.AppendBytes(AppendBool(dst.Bytes(), val))
+		dst.Write(AppendBool(*buf, val))
 	case int:
-		dst.AppendBytes(AppendInt(dst.Bytes(), val))
+		dst.Write(AppendInt(*buf, val))
 	case int8:
-		dst.AppendBytes(AppendInt8(dst.Bytes(), val))
+		dst.Write(AppendInt8(*buf, val))
 	case int16:
-		dst.AppendBytes(AppendInt16(dst.Bytes(), val))
+		dst.Write(AppendInt16(*buf, val))
 	case int32:
-		dst.AppendBytes(AppendInt32(dst.Bytes(), val))
+		dst.Write(AppendInt32(*buf, val))
 	case int64:
-		dst.AppendBytes(AppendInt64(dst.Bytes(), val))
+		dst.Write(AppendInt64(*buf, val))
 	case uint:
-		dst.AppendBytes(AppendUint(dst.Bytes(), val))
+		dst.Write(AppendUint(*buf, val))
 	case uint8:
-		dst.AppendBytes(AppendUint8(dst.Bytes(), val))
+		dst.Write(AppendUint8(*buf, val))
 	case uint16:
-		dst.AppendBytes(AppendUint16(dst.Bytes(), val))
+		dst.Write(AppendUint16(*buf, val))
 	case uint32:
-		dst.AppendBytes(AppendUint32(dst.Bytes(), val))
+		dst.Write(AppendUint32(*buf, val))
 	case uint64:
-		dst.AppendBytes(AppendUint64(dst.Bytes(), val))
+		dst.Write(AppendUint64(*buf, val))
 	case float32:
-		dst.AppendBytes(AppendFloat32(dst.Bytes(), val))
+		dst.Write(AppendFloat32(*buf, val))
 	case float64:
-		dst.AppendBytes(AppendFloat64(dst.Bytes(), val))
+		dst.Write(AppendFloat64(*buf, val))
 	case time.Time:
-		dst.AppendBytes(AppendTime(dst.Bytes(), val, opts.TimeFieldFormat))
+		dst.Write(AppendTime(*buf, val, opts.TimeFieldFormat))
 	case time.Duration:
-		dst.AppendBytes(AppendDuration(dst.Bytes(), val,
+		dst.Write(AppendDuration(*buf, val,
 			opts.DurationFieldUnit, opts.DurationFieldInteger))
 	case []string:
-		dst.AppendBytes(AppendStrings(dst.Bytes(), val))
+		dst.Write(AppendStrings(*buf, val))
 	case []bool:
-		dst.AppendBytes(AppendBools(dst.Bytes(), val))
+		dst.Write(AppendBools(*buf, val))
 	case []int:
-		dst.AppendBytes(AppendInts(dst.Bytes(), val))
+		dst.Write(AppendInts(*buf, val))
 	case []int8:
-		dst.AppendBytes(AppendInts8(dst.Bytes(), val))
+		dst.Write(AppendInts8(*buf, val))
 	case []int16:
-		dst.AppendBytes(AppendInts16(dst.Bytes(), val))
+		dst.Write(AppendInts16(*buf, val))
 	case []int32:
-		dst.AppendBytes(AppendInts32(dst.Bytes(), val))
+		dst.Write(AppendInts32(*buf, val))
 	case []int64:
-		dst.AppendBytes(AppendInts64(dst.Bytes(), val))
+		dst.Write(AppendInts64(*buf, val))
 	case []uint:
-		dst.AppendBytes(AppendUints(dst.Bytes(), val))
+		dst.Write(AppendUints(*buf, val))
 	// case []uint8:
-	// 	dst.AppendBytes(AppendUints8(dst.Bytes(), val))
+	// 	dst.Write(AppendUints8(*buf, val))
 	case []uint16:
-		dst.AppendBytes(AppendUints16(dst.Bytes(), val))
+		dst.Write(AppendUints16(*buf, val))
 	case []uint32:
-		dst.AppendBytes(AppendUints32(dst.Bytes(), val))
+		dst.Write(AppendUints32(*buf, val))
 	case []uint64:
-		dst.AppendBytes(AppendUints64(dst.Bytes(), val))
+		dst.Write(AppendUints64(*buf, val))
 	case []float32:
-		dst.AppendBytes(AppendFloats32(dst.Bytes(), val))
+		dst.Write(AppendFloats32(*buf, val))
 	case []float64:
-		dst.AppendBytes(AppendFloats64(dst.Bytes(), val))
+		dst.Write(AppendFloats64(*buf, val))
 	case []time.Time:
-		dst.AppendBytes(AppendTimes(dst.Bytes(), val, opts.TimeFieldFormat))
+		dst.Write(AppendTimes(*buf, val, opts.TimeFieldFormat))
 	case []time.Duration:
-		dst.AppendBytes(AppendDurations(dst.Bytes(), val,
+		dst.Write(AppendDurations(*buf, val,
 			opts.DurationFieldUnit, opts.DurationFieldInteger))
 	case nil:
-		dst.AppendBytes(append(dst.Bytes(), "null"...))
+		dst.Write(append(*buf, "null"...))
 	default:
-		dst.AppendBytes(AppendInterface(dst.Bytes(), val, opts.InterfaceMarshaler))
+		dst.Write(AppendInterface(*buf, val, opts.InterfaceMarshaler))
 	}
-	if !found {
-		*buffer = append(*buffer, dst)
-	}
+	// if !found {
+	// 	*buffer = append(*buffer, dst)
+	// }
+	bytesPool.Put(buf)
 }
 
 func AppendBool(dst []byte, val bool) []byte {

@@ -1,9 +1,10 @@
 package qlog
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
-	"github.com/karantin2020/qlog/buffer"
+	// "github.com/karantin2020/qlog/buffer"
+	"bytes"
 	"os"
 	"sync"
 	"time"
@@ -11,19 +12,31 @@ import (
 
 var (
 	entryPool  *sync.Pool
-	bufferPool *buffer.Pool
+	bufferPool *sync.Pool
+	bytesPool  *sync.Pool
+)
+
+const (
+	bufferFields = 7
 )
 
 func init() {
 	entryPool = &sync.Pool{
 		New: func() interface{} {
-			return &Entry{
-				Data:   make([]Field, 0, 10),
-				Buffer: make([]*buffer.Buffer, 0, 10),
-			}
+			return new(Entry)
 		},
 	}
-	bufferPool = buffer.NewPool()
+	bytesPool = &sync.Pool{
+		New: func() interface{} {
+			b := make([]byte, 0, 64)
+			return &b
+		},
+	}
+	bufferPool = &sync.Pool{
+		New: func() interface{} {
+			return new(bytes.Buffer)
+		},
+	}
 }
 
 type Entry struct {
@@ -33,21 +46,31 @@ type Entry struct {
 	Level   Level
 	Message string
 	ErrorF  error
-	Buffer  []*buffer.Buffer
+	buffer  [bufferFields]Field
 }
 
 // A Field is a marshaling struct type used to add a key-value pair to a logger's
 // context
 type Field struct {
-	Key   string
-	Value interface{}
+	Key    string
+	Value  interface{}
+	Buffer bytes.Buffer
 }
 
 func (f Field) MarshalJSON() ([]byte, error) {
-	b1, err := json.Marshal(f.Value)
-	b2 := []byte(f.Key + ":")
-	b2 = append(b2, b1...)
-	return b2, err
+	b := bufferPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer bufferPool.Put(b)
+	if _, err := b.Write(Str2Bytes(f.Key)); err != nil {
+		return nil, err
+	}
+	if _, err := b.Write([]byte{':'}); err != nil {
+		return nil, err
+	}
+	if _, err := b.Write(f.Buffer.Bytes()); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 func (l *Logger) NewEntry() *Entry {
@@ -64,24 +87,27 @@ func (e *Entry) Reset() {
 	// e.Time = time.Time{}
 	// e.Level = DebugLevel
 	e.Message = ""
-	e.Data = e.Data[:0]
-	e.Buffer = e.Buffer[:0]
+	for i := range e.buffer {
+		e.buffer[i].Buffer.Reset()
+	}
+	e.Data = e.buffer[:0]
+	// e.Buffer = e.Buffer[:0]
 	e.ErrorF = nil
 }
 
-func (e *Entry) Fields(fields ...Field) {
+func (e *Entry) Fields(fields ...F) {
 	for _, fld := range fields {
 		e.AddField(fld)
 	}
 }
 
 func (e *Entry) Err(err error) {
-	e.AddField(F{e.Logger.Notepad.Options.ErrorFieldName, err})
+	e.AddField(F{Key: e.Logger.Notepad.Options.ErrorFieldName, Value: err})
 }
 
 func (e *Entry) Timestamp() {
-	e.AddField(F{e.Logger.Notepad.Options.TimestampFieldName,
-		e.Logger.Notepad.Options.TimestampFunc()})
+	e.AddField(F{Key: e.Logger.Notepad.Options.TimestampFieldName,
+		Value: e.Logger.Notepad.Options.TimestampFunc()})
 }
 
 // func (e *Entry) Caller(calldepth int) {
@@ -119,7 +145,7 @@ func (e *Entry) errMsg(msg string, panicErr, exitErr bool) {
 	e.Level = e.Logger.Level
 	// if e.ErrorF == nil {
 	e.ErrorF = e.Logger.Notepad.Options.ErrorFunc(msg)
-	e.AddField(F{e.Logger.Notepad.Options.ErrorFieldName, e.ErrorF})
+	e.AddField(F{Key: e.Logger.Notepad.Options.ErrorFieldName, Value: e.ErrorF})
 	// } else {
 	e.Message = e.ErrorF.Error()
 	// }
@@ -214,8 +240,8 @@ func (e *Entry) Process() {
 	// fmt.Printf("%v\t%v\t%s\n", e.Data, e.ErrorF, e.Message)
 	// fmt.Printf("%v\n", e.Logger.Context)
 	// fmt.Printf("%v\n", e.Logger.Notepad.Context)
-	for _, buf := range e.Buffer {
-		buf.Free()
-	}
+	// for _, buf := range e.Buffer {
+	// 	buf.Free()
+	// }
 	entryPool.Put(e)
 }

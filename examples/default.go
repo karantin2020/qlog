@@ -10,10 +10,10 @@ func example_default() {
 	log.Info("failed to fetch URL")
 	log.Error("failed to fetch URL")
 	log.INFO.Fields(
-		qlog.F{"service", "new"},
-		qlog.F{"source", "after"},
+		qlog.F{Key: "service", Value: "new"},
+		qlog.F{Key: "source", Value: "after"},
 	).Msgf("failed to fetch %s", "URL")
 	log.Warn("failed to fetch URL")
 	log.Critical("failed to fetch URL")
-	log.Panic("failed to fetch URL")
+	// log.Panic("failed to fetch URL")
 }

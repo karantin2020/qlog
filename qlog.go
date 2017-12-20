@@ -3,7 +3,7 @@ package qlog
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/karantin2020/qlog/buffer"
+	// "github.com/karantin2020/qlog/buffer"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -28,9 +28,10 @@ type Logger struct {
 	// Logger context
 	Context []Field
 	// Context buffer
-	CtxBuffer []*buffer.Buffer
+	// CtxBuffer []*buffer.Buffer
 	// Enable flag
 	Enable bool
+	buffer [bufferFields]Field
 }
 
 // Notepad is where you leave a note!
@@ -56,11 +57,12 @@ type Notepad struct {
 	// Notepad context
 	Context []Field
 	// Context buffer
-	CtxBuffer []*buffer.Buffer
+	// CtxBuffer []*buffer.Buffer
 	// Loggers is pointer to inner loggers
 	Loggers [7]**Logger
 	// Options set notebook configs
 	Options LogConfig
+	buffer  [bufferFields]Field
 }
 
 type LogConfig struct {
@@ -115,7 +117,7 @@ func New(lvl Level /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/)
 	n.Loggers = [7]**Logger{&n.DEBUG, &n.INFO, &n.WARN, &n.ERROR, &n.CRITICAL, &n.PANIC, &n.FATAL}
 	n.Level = lvl
 	n.Formatter = make([]Formatter, 0, 3)
-	n.Context = make([]Field, 0, 10)
+	n.Context = n.buffer[:0]
 	n.Options = LogConfig{
 		TimestampFieldName:   "time",
 		LevelFieldName:       "level",
@@ -140,7 +142,7 @@ func (n *Notepad) init() {
 		level := Level(t)
 		if level >= n.Level {
 			*logger = NewLogger(n, level)
-			(*logger).AddField(F{n.Options.LevelFieldName, (*logger).Level.String()})
+			(*logger).AddField(F{Key: n.Options.LevelFieldName, Value: (*logger).Level.String()})
 		}
 	}
 }
@@ -149,10 +151,10 @@ func (n *Notepad) copy() *Notepad {
 	newnp := *n
 	newnp.Formatter = make([]Formatter, len(n.Formatter), cap(n.Formatter))
 	copy(newnp.Formatter, n.Formatter)
-	newnp.Context = make([]Field, len(n.Context), cap(n.Context))
-	copy(newnp.Context, n.Context)
-	newnp.CtxBuffer = make([]*buffer.Buffer, len(n.CtxBuffer), cap(n.CtxBuffer))
-	copy(newnp.CtxBuffer, n.CtxBuffer)
+	newnp.Context = newnp.buffer[:0]
+	newnp.Context = append(newnp.Context, n.Context...)
+	// newnp.CtxBuffer = make([]*buffer.Buffer, len(n.CtxBuffer), cap(n.CtxBuffer))
+	// copy(newnp.CtxBuffer, n.CtxBuffer)
 	newnp.Loggers = [7]**Logger{&newnp.DEBUG,
 		&newnp.INFO, &newnp.WARN, &newnp.ERROR,
 		&newnp.CRITICAL, &newnp.PANIC, &newnp.FATAL}
@@ -170,9 +172,9 @@ func (n *Notepad) free() {
 	for j := range n.Loggers {
 		(*n.Loggers[j]).free()
 	}
-	for i := range n.CtxBuffer {
-		n.CtxBuffer[i].Free()
-	}
+	// for i := range n.CtxBuffer {
+	// 	n.CtxBuffer[i].Free()
+	// }
 }
 
 func (np *Notepad) AddHook(lvl Level, h Hook) {
@@ -198,7 +200,7 @@ func (np *Notepad) SetOutput(fns ...func(*Notepad)) *Notepad {
 }
 
 func (np *Notepad) AddField(f F) {
-	AddField(f, &np.Context, &np.CtxBuffer, &np.Options)
+	AddField(f, &np.Context, &np.Options)
 }
 
 func (np *Notepad) WithFields(flds ...F) *Notepad {
@@ -210,37 +212,39 @@ func (np *Notepad) WithFields(flds ...F) *Notepad {
 }
 
 func (np *Notepad) Timestamp() *Notepad {
-	np.AddField(F{np.Options.TimestampFieldName, np.Options.TimestampFunc()})
+	np.AddField(F{Key: np.Options.TimestampFieldName, Value: np.Options.TimestampFunc()})
 	return np
 }
 
 func NewLogger(pn *Notepad, level Level) *Logger {
-	return &Logger{
+	lgr := &Logger{
 		Notepad: pn,
 		Hooks:   make([]Hook, 0, 3),
 		Level:   level,
-		Context: make([]Field, 0, 10),
-		Enable:  true,
+		// Context: make([]Field, 0, 10),
+		Enable: true,
 	}
+	lgr.Context = lgr.buffer[:0]
+	return lgr
 }
 
 func (l *Logger) copy() *Logger {
 	newl := *l
-	newl.Context = make([]Field, len(l.Context), cap(l.Context))
-	copy(newl.Context, l.Context)
-	newl.CtxBuffer = make([]*buffer.Buffer, len(l.CtxBuffer), cap(l.CtxBuffer))
-	copy(newl.CtxBuffer, l.CtxBuffer)
+	newl.Context = newl.buffer[:0]
+	newl.Context = append(newl.Context, l.Context...)
+	// newl.CtxBuffer = make([]*buffer.Buffer, len(l.CtxBuffer), cap(l.CtxBuffer))
+	// copy(newl.CtxBuffer, l.CtxBuffer)
 	return &newl
 }
 
 func (l *Logger) free() {
-	for i := range l.CtxBuffer {
-		l.CtxBuffer[i].Free()
-	}
+	// for i := range l.CtxBuffer {
+	// 	l.CtxBuffer[i].Free()
+	// }
 }
 
 func (l *Logger) AddField(f F) {
-	AddField(f, &l.Context, &l.CtxBuffer, &l.Notepad.Options)
+	AddField(f, &l.Context, &l.Notepad.Options)
 }
 
 func (l *Logger) WithFields(flds ...F) *Logger {

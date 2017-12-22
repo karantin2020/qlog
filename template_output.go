@@ -155,10 +155,10 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 						buf.bb[i] = Str2Bytes(e.Message)
 					}
 				}
-				i := 0
+				k := 0
 				_, err := t.ExecuteFunc(wio, func(w io.Writer, tag string) (int, error) {
-					i += 1
-					return w.Write(buf.bb[i-1])
+					k += 1
+					return w.Write(buf.bb[k-1])
 				})
 				if err != nil {
 					panic(fmt.Sprintf("unexpected error: %s", err))

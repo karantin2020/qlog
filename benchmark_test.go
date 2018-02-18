@@ -13,8 +13,7 @@ var (
 )
 
 func BenchmarkLogNoOutput(b *testing.B) {
-	log := New(InfoLevel).
-		Timestamp()
+	log := New(InfoLevel)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -25,7 +24,6 @@ func BenchmarkLogNoOutput(b *testing.B) {
 
 func BenchmarkLogEmpty(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -41,7 +39,6 @@ func BenchmarkLogEmpty(b *testing.B) {
 
 func BenchmarkLogDisabled(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -57,7 +54,6 @@ func BenchmarkLogDisabled(b *testing.B) {
 
 func BenchmarkInfo(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -73,7 +69,6 @@ func BenchmarkInfo(b *testing.B) {
 
 func BenchmarkError(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -89,7 +84,6 @@ func BenchmarkError(b *testing.B) {
 
 func BenchmarkInfoLower(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${level}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -103,9 +97,26 @@ func BenchmarkInfoLower(b *testing.B) {
 	})
 }
 
+func BenchmarkDiscard(b *testing.B) {
+	log := New(InfoLevel).
+		SetOutput(func(np *Notepad) {
+			for t, logger := range np.Loggers {
+				level := uint8(t)
+				if level >= np.Level.n {
+					(*logger).Output = append((*logger).Output, func(*Entry) {})
+				}
+			}
+		})
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			log.Info(fakeMessage)
+		}
+	})
+}
+
 func BenchmarkOneField(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -123,7 +134,6 @@ func BenchmarkOneField(b *testing.B) {
 
 func BenchmarkTwoFields(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -142,7 +152,6 @@ func BenchmarkTwoFields(b *testing.B) {
 
 func BenchmarkOneFieldLower(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${level}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -160,7 +169,6 @@ func BenchmarkOneFieldLower(b *testing.B) {
 
 func BenchmarkTwoFieldsLower(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		SetOutput(Template("${time}\t${level}\t${message}\t${fields}\n", func(topts *TemplateOptions) error {
 			topts.ErrHandle = ioutil.Discard
 			topts.OutHandle = ioutil.Discard
@@ -179,7 +187,6 @@ func BenchmarkTwoFieldsLower(b *testing.B) {
 
 func BenchmarkWithFields(b *testing.B) {
 	log := New(InfoLevel).
-		Timestamp().
 		WithFields(
 			F{Key: "service", Value: "new"},
 			F{Key: "source", Value: "after"},

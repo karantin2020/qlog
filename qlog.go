@@ -13,10 +13,6 @@ type Logger struct {
 	Output []Output
 	// Pointer to notepad parent instance
 	Notepad *Notepad
-
-	// // Logs are written to that destination
-	// Out io.Writer
-
 	// Hooks for the logger instance. These allow firing events based on logging
 	// levels and log entries. For example, to send errors to an error tracking
 	// service, log to StatsD or dump the core on fatal errors.
@@ -27,11 +23,8 @@ type Logger struct {
 	Level Level
 	// Logger context
 	Context []Field
-	// Context buffer
-	// CtxBuffer []*buffer.Buffer
 	// Enable flag
 	Enable bool
-	buffer [bufferFields]Field
 }
 
 // Notepad is where you leave a note!
@@ -56,13 +49,10 @@ type Notepad struct {
 	Formatter []Formatter
 	// Notepad context
 	Context []Field
-	// Context buffer
-	// CtxBuffer []*buffer.Buffer
 	// Loggers is pointer to inner loggers
 	Loggers [7]**Logger
 	// Options set notebook configs
 	Options LogConfig
-	buffer  [bufferFields]Field
 }
 
 type LogConfig struct {
@@ -80,6 +70,9 @@ type LogConfig struct {
 
 	// CallerFieldName is the field name used for caller fields.
 	CallerFieldName string // "caller"
+
+	// FieldsName is the field name used for fields.
+	FieldsName string // "fields"
 
 	// ErrorFunc generates error field from message if no error was passed to Entry
 	ErrorFunc func(string) error
@@ -109,21 +102,22 @@ func (l *Logger) AddHook(h Hook) {
 }
 
 // New func returns new instance of notepad
-func New(lvl Level /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/) *Notepad {
+func New(lvl uint8 /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/) *Notepad {
 	if lvl > _maxLevel || lvl < _minLevel {
 		panic("Logging level is out of range")
 	}
 	n := &Notepad{}
 	n.Loggers = [7]**Logger{&n.DEBUG, &n.INFO, &n.WARN, &n.ERROR, &n.CRITICAL, &n.PANIC, &n.FATAL}
-	n.Level = lvl
+	n.Level = InitLevel(lvl)
 	n.Formatter = make([]Formatter, 0, 3)
-	n.Context = n.buffer[:0]
+	n.Context = make([]Field, 0, 7)
 	n.Options = LogConfig{
 		TimestampFieldName:   "time",
 		LevelFieldName:       "level",
 		MessageFieldName:     "message",
 		ErrorFieldName:       "error",
 		CallerFieldName:      "caller",
+		FieldsName:           "fields",
 		ErrorFunc:            errors.New,
 		TimeFieldFormat:      "2006-01-02T15:04:05.000Z0700", // or time.RFC3339
 		TimestampFunc:        time.Now,
@@ -139,10 +133,10 @@ func New(lvl Level /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/)
 // init creates the Loggers for each level depending on the notepad levels.
 func (n *Notepad) init() {
 	for t, logger := range n.Loggers {
-		level := Level(t)
-		if level >= n.Level {
+		level := uint8(t)
+		if level >= n.Level.n {
 			*logger = NewLogger(n, level)
-			(*logger).AddField(F{Key: n.Options.LevelFieldName, Value: (*logger).Level.String()})
+			(*logger).Output = make([]Output, 0, 3)
 		}
 	}
 }
@@ -151,7 +145,7 @@ func (n *Notepad) copy() *Notepad {
 	newnp := *n
 	newnp.Formatter = make([]Formatter, len(n.Formatter), cap(n.Formatter))
 	copy(newnp.Formatter, n.Formatter)
-	newnp.Context = newnp.buffer[:0]
+	newnp.Context = make([]Field, 0, 7)
 	newnp.Context = append(newnp.Context, n.Context...)
 	// newnp.CtxBuffer = make([]*buffer.Buffer, len(n.CtxBuffer), cap(n.CtxBuffer))
 	// copy(newnp.CtxBuffer, n.CtxBuffer)
@@ -177,9 +171,9 @@ func (n *Notepad) free() {
 	// }
 }
 
-func (np *Notepad) AddHook(lvl Level, h Hook) {
+func (np *Notepad) AddHook(lvl uint8, h Hook) {
 	for t, logger := range np.Loggers {
-		if lvl >= Level(t) {
+		if lvl >= uint8(t) {
 			(*logger).AddHook(h)
 		}
 	}
@@ -187,7 +181,7 @@ func (np *Notepad) AddHook(lvl Level, h Hook) {
 
 func (np *Notepad) Hooks(hs ...Hook) *Notepad {
 	for _, h := range hs {
-		np.AddHook(np.Level, h)
+		np.AddHook(np.Level.n, h)
 	}
 	return np
 }
@@ -216,21 +210,21 @@ func (np *Notepad) Timestamp() *Notepad {
 	return np
 }
 
-func NewLogger(pn *Notepad, level Level) *Logger {
+func NewLogger(pn *Notepad, level uint8) *Logger {
 	lgr := &Logger{
 		Notepad: pn,
 		Hooks:   make([]Hook, 0, 3),
-		Level:   level,
+		Level:   InitLevel(level),
 		// Context: make([]Field, 0, 10),
 		Enable: true,
 	}
-	lgr.Context = lgr.buffer[:0]
+	lgr.Context = make([]Field, 0, 7)
 	return lgr
 }
 
 func (l *Logger) copy() *Logger {
 	newl := *l
-	newl.Context = newl.buffer[:0]
+	newl.Context = make([]Field, 0, 7)
 	newl.Context = append(newl.Context, l.Context...)
 	// newl.CtxBuffer = make([]*buffer.Buffer, len(l.CtxBuffer), cap(l.CtxBuffer))
 	// copy(newl.CtxBuffer, l.CtxBuffer)
@@ -320,8 +314,8 @@ func (np *Notepad) Log(msg string) {
 
 func (l *Logger) Msg(msg string) {
 	e := l.NewEntry()
-	e.Level = l.Level
-	e.Message = msg
+	// e.Level = l.Level
+	e.Message = append(e.Message, Str2Bytes(msg)...)
 	e.Process()
 }
 

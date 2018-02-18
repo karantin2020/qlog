@@ -21,8 +21,8 @@ func (e *Entry) AddField(f F) {
 
 func (l *Logger) Fields(flds ...F) *Entry {
 	e := l.NewEntry()
-	for _, f := range flds {
-		e.AddField(f)
+	for i, _ := range flds {
+		e.AddField(flds[i])
 	}
 	return e
 }
@@ -429,6 +429,12 @@ func AppendStrings(dst []byte, vals []string) []byte {
 func AppendString(dst []byte, s string) []byte {
 	// Start with a double quote.
 	dst = append(dst, '"')
+	dst = AppendStringNoQuotes(dst, s)
+	// End with a double quote
+	return append(dst, '"')
+}
+
+func AppendStringNoQuotes(dst []byte, s string) []byte {
 	// Loop through each character in the string.
 	for i := 0; i < len(s); i++ {
 		// Check if the character needs encoding. Control characters, slashes,
@@ -443,9 +449,7 @@ func AppendString(dst []byte, s string) []byte {
 	}
 	// The string has no need for encoding an therefore is directly
 	// appended to the byte slice.
-	dst = append(dst, s...)
-	// End with a double quote
-	return append(dst, '"')
+	return append(dst, s...)
 }
 
 // appendStringComplex is used by appendString to take over an in

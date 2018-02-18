@@ -5,12 +5,15 @@ import (
 )
 
 // A Level is a logging priority. Higher levels are more important.
-type Level uint8
+type Level struct {
+	n uint8
+	b []byte
+}
 
 const (
 	// DebugLevel logs are typically voluminous, and are usually disabled in
 	// production.
-	DebugLevel Level = iota
+	DebugLevel uint8 = iota
 	// InfoLevel is the default logging priority.
 	InfoLevel
 	// WarnLevel logs are more important than Info, but don't need individual
@@ -31,9 +34,25 @@ const (
 	_maxLevel = FatalLevel
 )
 
+var (
+	_debug    = []byte("debug")
+	_info     = []byte("info")
+	_warn     = []byte("warn")
+	_error    = []byte("error")
+	_critical = []byte("critical")
+	_panic    = []byte("panic")
+	_fatal    = []byte("fatal")
+)
+
+func InitLevel(lvl uint8) Level {
+	l := Level{n: lvl}
+	l.b = l.ToBytes()
+	return l
+}
+
 // String returns a lower-case ASCII representation of the log level.
 func (l Level) String() string {
-	switch l {
+	switch l.n {
 	case DebugLevel:
 		return "debug"
 	case InfoLevel:
@@ -53,11 +72,53 @@ func (l Level) String() string {
 	}
 }
 
+func (l Level) AppendBytes(dst []byte) []byte {
+	switch l.n {
+	case DebugLevel:
+		return AppendStringNoQuotes(dst, "debug")
+	case InfoLevel:
+		return AppendStringNoQuotes(dst, "info")
+	case WarnLevel:
+		return AppendStringNoQuotes(dst, "warn")
+	case ErrorLevel:
+		return AppendStringNoQuotes(dst, "error")
+	case CriticalLevel:
+		return AppendStringNoQuotes(dst, "critical")
+	case PanicLevel:
+		return AppendStringNoQuotes(dst, "panic")
+	case FatalLevel:
+		return AppendStringNoQuotes(dst, "fatal")
+	default:
+		return AppendStringNoQuotes(dst, fmt.Sprintf("Level(%d)", l))
+	}
+}
+
+func (l Level) ToBytes() []byte {
+	switch l.n {
+	case DebugLevel:
+		return _debug
+	case InfoLevel:
+		return _info
+	case WarnLevel:
+		return _warn
+	case ErrorLevel:
+		return _error
+	case CriticalLevel:
+		return _critical
+	case PanicLevel:
+		return _panic
+	case FatalLevel:
+		return _fatal
+	default:
+		return Str2Bytes(fmt.Sprintf("Level(%d)", l))
+	}
+}
+
 // CapitalString returns an all-caps ASCII representation of the log level.
 func (l Level) CapitalString() string {
 	// Printing levels in all-caps is common enough that we should export this
 	// functionality.
-	switch l {
+	switch l.n {
 	case DebugLevel:
 		return "DEBUG"
 	case InfoLevel:

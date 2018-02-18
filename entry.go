@@ -1,10 +1,8 @@
 package qlog
 
 import (
-	// "encoding/json"
-	"fmt"
-	// "github.com/karantin2020/qlog/buffer"
 	"bytes"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -17,12 +15,23 @@ var (
 )
 
 const (
-	bufferFields = 7
+	fieldsLen  = 10
+	nameLen    = 32
+	messageLen = 256
+	timeLen    = 32
+	levelLen   = 10
 )
 
 func init() {
 	entryPool = &sync.Pool{
 		New: func() interface{} {
+			// e := &Entry{
+			// 	st_data:        make([]Field, 0, fieldsLen),
+			// 	st_name:        make([]byte, 0, nameLen),
+			// 	st_message:     make([]byte, 0, messageLen),
+			// 	st_bufferTime:  make([]byte, 0, timeLen),
+			// 	st_bufferLevel: make([]byte, 0, levelLen),
+			// }
 			return new(Entry)
 		},
 	}
@@ -40,13 +49,22 @@ func init() {
 }
 
 type Entry struct {
-	Logger  *Logger
-	Data    []Field
-	Time    time.Time
-	Level   Level
-	Message string
-	ErrorF  error
-	buffer  [bufferFields]Field
+	Logger *Logger
+	Data   []Field
+	Name   []byte
+	Time   time.Time
+	// Level    Level
+	Message  []byte
+	ErrorFld error
+
+	bufferTime  []byte
+	bufferLevel []byte
+
+	st_data        [fieldsLen]Field
+	st_name        [nameLen]byte
+	st_message     [messageLen]byte
+	st_bufferTime  [timeLen]byte
+	st_bufferLevel []byte
 }
 
 // A Field is a marshaling struct type used to add a key-value pair to a logger's
@@ -78,21 +96,25 @@ func (l *Logger) NewEntry() *Entry {
 	entry.Reset()
 	entry.Time = time.Now()
 	entry.Logger = l
-	entry.Level = l.Level
+	entry.bufferTime = entry.Time.AppendFormat(entry.bufferTime, entry.Logger.Notepad.Options.TimeFieldFormat)
+	// entry.Level = l.Level
+	entry.bufferLevel = l.Level.b
 	return entry
 }
 
 func (e *Entry) Reset() {
-	e.Logger = nil
-	// e.Time = time.Time{}
-	// e.Level = DebugLevel
-	e.Message = ""
-	for i := range e.buffer {
-		e.buffer[i].Buffer.Reset()
-	}
-	e.Data = e.buffer[:0]
-	// e.Buffer = e.Buffer[:0]
-	e.ErrorF = nil
+	// e.Logger = nil
+	// e.Name = e.Name[:0]
+	// e.Message = e.Message[:0]
+	// e.Data = e.Data[:0]
+	e.ErrorFld = nil
+	// e.bufferTime = e.bufferTime[:0]
+	// e.bufferLevel = e.bufferLevel[:0]
+	e.Data = e.st_data[:0]
+	e.Name = e.st_name[:0]
+	e.Message = e.st_message[:0]
+	e.bufferTime = e.st_bufferTime[:0]
+	e.bufferLevel = nil
 }
 
 func (e *Entry) Fields(fields ...F) {
@@ -142,12 +164,12 @@ func (e *Entry) Warn(msg string) {
 }
 
 func (e *Entry) errMsg(msg string, panicErr, exitErr bool) {
-	e.Level = e.Logger.Level
-	// if e.ErrorF == nil {
-	e.ErrorF = e.Logger.Notepad.Options.ErrorFunc(msg)
-	e.AddField(F{Key: e.Logger.Notepad.Options.ErrorFieldName, Value: e.ErrorF})
+	// e.Level = e.Logger.Level
+	// if e.ErrorFld == nil {
+	e.ErrorFld = e.Logger.Notepad.Options.ErrorFunc(msg)
+	e.AddField(F{Key: e.Logger.Notepad.Options.ErrorFieldName, Value: e.ErrorFld})
 	// } else {
-	e.Message = e.ErrorF.Error()
+	e.Message = append(e.Message, Str2Bytes(e.ErrorFld.Error())...)
 	// }
 	e.Process()
 	if panicErr {
@@ -204,8 +226,8 @@ func (e *Entry) Msg(msg string) {
 	if e.Logger == nil {
 		return
 	}
-	e.Level = e.Logger.Level
-	e.Message = msg
+	// e.Level = e.Logger.Level
+	e.Message = append(e.Message, Str2Bytes(msg)...)
 	e.Process()
 }
 
@@ -223,21 +245,10 @@ func (e *Entry) Process() {
 	for _, hook := range e.Logger.Hooks {
 		hook(e)
 	}
-	if len(e.Logger.Output) == 1 {
-		e.Logger.Output[0](e)
-	} else if len(e.Logger.Output) > 1 {
-		var wg sync.WaitGroup
-		for _, out := range e.Logger.Output {
-			wg.Add(1)
-			go func(et *Entry, fn func(*Entry)) {
-				// Decrement the counter when the goroutine completes.
-				defer wg.Done()
-				fn(et)
-			}(e, out)
-		}
-		wg.Wait()
+	for i, _ := range e.Logger.Output {
+		e.Logger.Output[i](e)
 	}
-	// fmt.Printf("%v\t%v\t%s\n", e.Data, e.ErrorF, e.Message)
+	// fmt.Printf("%v\t%v\t%s\n", e.Data, e.ErrorFld, e.Message)
 	// fmt.Printf("%v\n", e.Logger.Context)
 	// fmt.Printf("%v\n", e.Logger.Notepad.Context)
 	// for _, buf := range e.Buffer {

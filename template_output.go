@@ -3,6 +3,7 @@ package qlog
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/karantin2020/fasttemplate"
 	// "github.com/karantin2020/qlog/buffer"
 	"io"
@@ -14,16 +15,19 @@ import (
 )
 
 type TemplateOptions struct {
-	ErrHandle     io.Writer
-	OutHandle     io.Writer
-	ErrLevel      Level
-	OutLevel      Level
-	FieldsName    string
-	MessageName   string
-	ErrorName     string
-	TimestampName string
+	ErrHandle       io.Writer
+	OutHandle       io.Writer
+	ErrLevel        uint8
+	OutLevel        uint8
+	TimestampName   string
+	LevelName       string
+	MessageName     string
+	ErrorName       string
+	FieldsName      string
+	FieldsStyle     string
+	FieldsSeparator byte
 
-	upperTags []bool
+	upperTags map[string]bool
 }
 
 var (
@@ -31,13 +35,8 @@ var (
 )
 
 type iBuffer struct {
-	bb [][]byte
-	pl PairList
-	fb []byte
-	// bootstrap arrays
-	bbt [20][]byte
-	plt [10]Pair
-	fbt [128]byte
+	fb  []byte
+	fbt [256]byte
 }
 
 func init() {
@@ -55,16 +54,10 @@ func newBuffer() *iBuffer {
 }
 
 func (b *iBuffer) reset() {
-	b.bb = b.bbt[:0]
-	b.pl = b.plt[:0]
 	b.fb = b.fbt[:0]
 }
 
 func (b *iBuffer) free() {
-	for i := range b.bbt {
-		b.bbt[i] = nil
-	}
-	b.reset()
 	bPool.Put(b)
 }
 
@@ -78,7 +71,7 @@ type PairList []Pair
 func (pl PairList) String() string {
 	bb := bufferPool.Get().(*bytes.Buffer)
 	bb.Reset()
-	bb.Write(Str2Bytes("{"))
+	bb.Write([]byte{'{'})
 	for i, _ := range pl {
 		bb.Write([]byte{'"'})
 		bb.Write(pl[i].Key)
@@ -89,42 +82,43 @@ func (pl PairList) String() string {
 			bb.Write([]byte{','})
 		}
 	}
-	bb.Write(Str2Bytes("}"))
+	bb.Write([]byte{'}'})
 	s := bb.String()
 	bufferPool.Put(bb)
 	return s
 }
 
-func (pl PairList) iString(fb []byte) []byte {
-	fb = append(fb, Str2Bytes("{")...)
+func (pl PairList) JSONByte(fb []byte, separator byte) []byte {
+	fb = append(fb, '{')
 	for i, _ := range pl {
-		fb = append(fb, Str2Bytes("\"")...)
+		fb = append(fb, '"')
 		fb = append(fb, pl[i].Key...)
-		fb = append(fb, Str2Bytes("\"")...)
-		fb = append(fb, Str2Bytes(":")...)
+		fb = append(fb, '"')
+		fb = append(fb, separator)
 		fb = append(fb, pl[i].Value...)
 		if i < len(pl)-1 {
-			fb = append(fb, Str2Bytes(",")...)
+			fb = append(fb, ',')
 		}
 	}
-	fb = append(fb, Str2Bytes("}")...)
+	fb = append(fb, '}')
 	return fb
 }
 
 func Template(template string, opts ...func(*TemplateOptions) error) func(np *Notepad) {
-	options := newTemplateOptions()
+	options := defaultTemplateOptions()
 	for _, fn := range opts {
 		fn(options)
 	}
 	t, err := fasttemplate.NewTemplate(template, "${", "}")
-	options.upperTags = make([]bool, len(t.Tags))
+	emptyByteSlice := []byte{}
+
 	// Assumption that all tags with starting upper case letter
 	// have all upper case letters
 	for k := range t.Tags {
 		for _, r := range t.Tags[k] {
 			if unicode.IsUpper(r) {
-				options.upperTags[k] = true
 				t.Tags[k] = strings.ToLower(t.Tags[k])
+				options.upperTags[t.Tags[k]] = true
 			}
 			break
 		}
@@ -133,81 +127,106 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 		panic("unexpected error when parsing template: " + err.Error())
 	}
 	return func(np *Notepad) {
-		if options.OutLevel > _maxLevel || options.OutLevel < _minLevel || options.OutLevel < np.Level {
+		if options.OutLevel > _maxLevel || options.OutLevel < _minLevel || options.OutLevel < np.Level.n {
 			panic("OutLevel is out of range")
 		}
-		if options.ErrLevel > _maxLevel || options.ErrLevel < _minLevel || options.ErrLevel < np.Level {
+		if options.ErrLevel > _maxLevel || options.ErrLevel < _minLevel || options.ErrLevel < np.Level.n {
 			panic("ErrLevel is out of range")
 		}
 		if options.OutLevel > options.ErrLevel {
 			panic("OutLevel is higher than errLevel")
 		}
-		tmpOut := func(wio io.Writer) Output {
+		tmpOut := func(wio io.Writer, topts *TemplateOptions) Output {
 			return func(e *Entry) {
 				buf := newBuffer()
-				buf.bb = buf.bb[:len(t.Tags)]
-				GetEntryFields(e, t.Tags, options.upperTags, &buf.bb, &buf.pl)
-				for i, t := range t.Tags {
-					if t == options.FieldsName {
-						buf.bb[i] = buf.pl.iString(buf.fb)
-					}
-					if t == options.MessageName {
-						buf.bb[i] = Str2Bytes(e.Message)
-					}
-				}
-				k := 0
+				// buf.bb = buf.bb[:len(t.Tags)]
+				// fmt.Printf("\nStart\n%#v\n\n", buf.pl)
+				// fmt.Printf("%#v\n", e.Time)
+				// fmt.Printf("%s\n", e.bufferTime)
+				buf.fb = GetEntryFields(e, buf.fb, topts.FieldsSeparator)
 				_, err := t.ExecuteFunc(wio, func(w io.Writer, tag string) (int, error) {
-					k += 1
-					return w.Write(buf.bb[k-1])
+					upper := options.upperTags[tag]
+					var outBytes []byte
+					switch tag {
+					case topts.TimestampName:
+						outBytes = e.bufferTime
+					case topts.LevelName:
+						outBytes = e.bufferLevel
+					case topts.MessageName:
+						outBytes = e.Message
+					case topts.ErrorName:
+						outBytes = Str2Bytes(e.ErrorFld.Error())
+					case topts.FieldsName:
+						outBytes = buf.fb
+					default:
+						outBytes = emptyByteSlice
+					}
+					if upper {
+						return w.Write(bytes.ToUpper(outBytes))
+					}
+					return w.Write(outBytes)
 				})
+				buf.free()
 				if err != nil {
 					panic(fmt.Sprintf("unexpected error: %s", err))
 				}
-				buf.free()
 			}
 		}
 		for tlv, logger := range np.Loggers {
-			level := Level(tlv)
+			level := uint8(tlv)
 			switch {
 			case level >= options.ErrLevel:
-				(*logger).Output = append((*logger).Output, tmpOut(options.ErrHandle))
+				(*logger).Output = append((*logger).Output, tmpOut(options.ErrHandle, options))
 
 			case level >= options.OutLevel:
-				(*logger).Output = append((*logger).Output, tmpOut(options.OutHandle))
+				(*logger).Output = append((*logger).Output, tmpOut(options.OutHandle, options))
 			}
 		}
 	}
 }
 
-func newTemplateOptions() *TemplateOptions {
+func defaultTemplateOptions() *TemplateOptions {
 	return &TemplateOptions{
-		ErrHandle:   os.Stderr,
-		OutHandle:   os.Stdout,
-		ErrLevel:    ErrorLevel,
-		OutLevel:    InfoLevel,
-		FieldsName:  "fields",
-		MessageName: "message",
+		ErrHandle:       os.Stderr,
+		OutHandle:       os.Stdout,
+		ErrLevel:        ErrorLevel,
+		OutLevel:        InfoLevel,
+		TimestampName:   "time",
+		LevelName:       "level",
+		MessageName:     "message",
+		FieldsName:      "fields",
+		ErrorName:       "error",
+		FieldsStyle:     "json",
+		FieldsSeparator: ':',
+		upperTags:       make(map[string]bool),
 	}
 }
 
-func GetEntryFields(e *Entry, tags []string, upperTags []bool, tfields *[][]byte, fields *PairList) {
+func GetEntryFields(e *Entry, buf []byte, sep byte) []byte {
 
-	addFld := func(data []Field) {
-		for _, v := range data {
-			if i, ok := stringInSlice(v.Key, tags); ok {
-				(*tfields)[i] = v.Buffer.Bytes()[1:]
-				(*tfields)[i] = (*tfields)[i][0 : len((*tfields)[i])-1]
-				if upperTags[i] {
-					(*tfields)[i] = bytes.ToUpper((*tfields)[i])
-				}
-			} else {
-				(*fields) = append((*fields), Pair{Str2Bytes(v.Key), v.Buffer.Bytes()})
-			}
+	// fmt.Printf("%#v\n", e.Logger.Notepad.Context)
+	// fmt.Printf("%#v\n", e.Logger.Context)
+	// fmt.Printf("%#v\n", e.Data)
+	buf = append(buf, '{')
+	buf = addFld(e.Logger.Notepad.Context, buf, sep)
+	buf = addFld(e.Logger.Context, buf, sep)
+	buf = addFld(e.Data, buf, sep)
+	buf = append(buf, '}')
+	return buf
+}
+
+func addFld(data []Field, buf []byte, sep byte) []byte {
+	for i, _ := range data {
+		buf = append(buf, '"')
+		buf = append(buf, Str2Bytes(data[i].Key)...)
+		buf = append(buf, '"')
+		buf = append(buf, sep)
+		buf = append(buf, data[i].Buffer.Bytes()...)
+		if i < len(data)-1 {
+			buf = append(buf, ',')
 		}
 	}
-	addFld(e.Logger.Notepad.Context)
-	addFld(e.Logger.Context)
-	addFld(e.Data)
+	return buf
 }
 
 func stringInSlice(a string, list []string) (int, bool) {

@@ -9,8 +9,18 @@ pipeline:
     commands:
       - go test -v
 
+  test1.10:
+    group: tests
+    image: golang:1.10-alpine3.7
+    commands:
+      - go test -v
+
   bench1.9:
-    group: benchmarks
     image: golang:1.9.2-alpine3.6
     commands:
-      - go test -benchmem  -bench=.
+      - go test -benchmem  -bench=. -benchtime 5s
+
+  bench1.10:
+    image: golang:1.10-alpine3.7
+    commands:
+      - go test -benchmem  -bench=. -benchtime 5s

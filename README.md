@@ -69,9 +69,8 @@ import (
 )
 
 func example_new() {
-	nlog := qlog.New(qlog.InfoLevel).
-		Timestamp().
-		SetOutput(qlog.Template("${time}\t${level}\t${message}\t${fields}\n"))
+	nlog := qlog.New(InfoLevel).
+		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n")
 	nlog.INFO.Msgf("failed to fetch %s", "URL")
 	nlog.INFO.Msg("failed to fetch 'URL'")
 
@@ -105,23 +104,27 @@ For now only text output is implemented. It's performance is equal to uber/zap a
 
 Benchmark results:
 
+go1.9
+
 ```bash
 $ go test -benchmem  -bench=.
 goos: linux
 goarch: amd64
 pkg: github.com/karantin2020/qlog
-BenchmarkLogNoOutput-3      	30000000	        57.9 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLogEmpty-3         	 5000000	       250 ns/op	      48 B/op	       3 allocs/op
-BenchmarkLogDisabled-3      	2000000000	         1.88 ns/op	       0 B/op	       0 allocs/op
-BenchmarkInfo-3             	 5000000	       248 ns/op	      48 B/op	       3 allocs/op
-BenchmarkInfoLower-3        	10000000	       260 ns/op	      40 B/op	       2 allocs/op
-BenchmarkOneField-3         	 5000000	       382 ns/op	      48 B/op	       3 allocs/op
-BenchmarkTwoFields-3        	 3000000	       489 ns/op	      48 B/op	       3 allocs/op
-BenchmarkOneFieldLower-3    	 5000000	       352 ns/op	      40 B/op	       2 allocs/op
-BenchmarkTwoFieldsLower-3   	 5000000	       394 ns/op	      40 B/op	       2 allocs/op
-BenchmarkWithFields-3       	 5000000	       377 ns/op	      48 B/op	       3 allocs/op
+BenchmarkLogNoOutput-3      	 10000000	       216 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogEmpty-3         	 2000000	       594 ns/op	      68 B/op	       2 allocs/op
+BenchmarkLogDisabled-3      	 1000000000        2.02 ns/op	       0 B/op	       0 allocs/op
+BenchmarkInfo-3             	 3000000	       565 ns/op	      68 B/op	       2 allocs/op
+BenchmarkError-3            	 2000000	       716 ns/op	      85 B/op	       3 allocs/op
+BenchmarkInfoLower-3        	 3000000	       516 ns/op	      64 B/op	       1 allocs/op
+BenchmarkDiscard-3          	 5000000	       231 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOneField-3         	 2000000	       716 ns/op	      68 B/op	       2 allocs/op
+BenchmarkTwoFields-3        	 2000000	       702 ns/op	      68 B/op	       2 allocs/op
+BenchmarkOneFieldLower-3    	 2000000	       649 ns/op	      64 B/op	       1 allocs/op
+BenchmarkTwoFieldsLower-3   	 2000000	       562 ns/op	      64 B/op	       1 allocs/op
+BenchmarkWithFields-3       	 2000000	       574 ns/op	      68 B/op	       2 allocs/op
 PASS
-ok github.com/karantin2020/qlog 22.645s
+ok github.com/karantin2020/qlog 24.190s
 ```
 
 ## Development Status: Stable

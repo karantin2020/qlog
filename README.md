@@ -107,24 +107,47 @@ Benchmark results:
 go1.9
 
 ```bash
-$ go test -benchmem  -bench=.
+$ go test -benchmem  -bench=. -benchtime 5s
 goos: linux
 goarch: amd64
 pkg: github.com/karantin2020/qlog
-BenchmarkLogNoOutput-3      	 10000000	       216 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLogEmpty-3         	 2000000	       594 ns/op	      68 B/op	       2 allocs/op
-BenchmarkLogDisabled-3      	 1000000000        2.02 ns/op	       0 B/op	       0 allocs/op
-BenchmarkInfo-3             	 3000000	       565 ns/op	      68 B/op	       2 allocs/op
-BenchmarkError-3            	 2000000	       716 ns/op	      85 B/op	       3 allocs/op
-BenchmarkInfoLower-3        	 3000000	       516 ns/op	      64 B/op	       1 allocs/op
-BenchmarkDiscard-3          	 5000000	       231 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOneField-3         	 2000000	       716 ns/op	      68 B/op	       2 allocs/op
-BenchmarkTwoFields-3        	 2000000	       702 ns/op	      68 B/op	       2 allocs/op
-BenchmarkOneFieldLower-3    	 2000000	       649 ns/op	      64 B/op	       1 allocs/op
-BenchmarkTwoFieldsLower-3   	 2000000	       562 ns/op	      64 B/op	       1 allocs/op
-BenchmarkWithFields-3       	 2000000	       574 ns/op	      68 B/op	       2 allocs/op
+BenchmarkLogNoOutput-3      	30000000	       208 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogEmpty-3         	20000000	       509 ns/op	      68 B/op	       2 allocs/op
+BenchmarkLogDisabled-3      	3000000000	         1.64 ns/op	       0 B/op	       0 allocs/op
+BenchmarkInfo-3             	20000000	       649 ns/op	      68 B/op	       2 allocs/op
+BenchmarkError-3            	10000000	       765 ns/op	      85 B/op	       3 allocs/op
+BenchmarkInfoLower-3        	20000000	       479 ns/op	      64 B/op	       1 allocs/op
+BenchmarkDiscard-3          	30000000	       224 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOneField-3         	10000000	       575 ns/op	      68 B/op	       2 allocs/op
+BenchmarkTwoFields-3        	10000000	       688 ns/op	      68 B/op	       2 allocs/op
+BenchmarkOneFieldLower-3    	20000000	       551 ns/op	      64 B/op	       1 allocs/op
+BenchmarkTwoFieldsLower-3   	10000000	       626 ns/op	      64 B/op	       1 allocs/op
+BenchmarkWithFields-3       	20000000	       534 ns/op	      68 B/op	       2 allocs/op
 PASS
-ok github.com/karantin2020/qlog 24.190s
+ok github.com/karantin2020/qlog 105.338s
+```
+
+go1.10
+
+```bash
+$ go test -benchmem  -bench=. -benchtime 5s
+goos: linux
+goarch: amd64
+pkg: github.com/karantin2020/qlog
+BenchmarkLogNoOutput-3      	30000000	       220 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogEmpty-3         	20000000	       531 ns/op	      68 B/op	       2 allocs/op
+BenchmarkLogDisabled-3      	10000000000	         1.74 ns/op	       0 B/op	       0 allocs/op
+BenchmarkInfo-3             	20000000	       602 ns/op	      68 B/op	       2 allocs/op
+BenchmarkError-3            	10000000	       721 ns/op	      85 B/op	       3 allocs/op
+BenchmarkInfoLower-3        	20000000	       480 ns/op	      64 B/op	       1 allocs/op
+BenchmarkDiscard-3          	30000000	       236 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOneField-3         	10000000	       677 ns/op	      68 B/op	       2 allocs/op
+BenchmarkTwoFields-3        	10000000	       804 ns/op	      68 B/op	       2 allocs/op
+BenchmarkOneFieldLower-3    	10000000	       684 ns/op	      64 B/op	       1 allocs/op
+BenchmarkTwoFieldsLower-3   	10000000	       669 ns/op	      64 B/op	       1 allocs/op
+BenchmarkWithFields-3       	20000000	       618 ns/op	      68 B/op	       2 allocs/op
+PASS
+ok github.com/karantin2020/qlog 123.175s
 ```
 
 ## Development Status: Stable

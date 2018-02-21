@@ -5,7 +5,7 @@ workspace:
 pipeline:
   test1.9:
     group: tests
-    image: golang:1.9.2-alpine3.6
+    image: golang:1.9-alpine3.7
     commands:
       - go test -v
 
@@ -16,7 +16,7 @@ pipeline:
       - go test -v
 
   bench1.9:
-    image: golang:1.9.2-alpine3.6
+    image: golang:1.9-alpine3.7
     commands:
       - go test -benchmem  -bench=. -benchtime 5s
 

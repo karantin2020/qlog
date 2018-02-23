@@ -183,7 +183,7 @@ func (np *Notepad) AddHook(lvl uint8, h Hook) {
 	}
 }
 
-func (np *Notepad) Hooks(hs ...Hook) *Notepad {
+func (np *Notepad) AddHooks(hs ...Hook) *Notepad {
 	for _, h := range hs {
 		np.AddHook(np.Level.n, h)
 	}

@@ -2,7 +2,6 @@ package qlog_test
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -54,7 +53,7 @@ func TestNotepad_AddHook(t *testing.T) {
 			"New Hook add",
 			func() error {
 				np.AddHook(qlog.WarnLevel, hook)
-				fmt.Printf("Took info hooks: %#v with len %d\n", np.INFO.Hooks, len(np.INFO.Hooks))
+				// fmt.Printf("Took info hooks: %#v with len %d\n", np.INFO.Hooks, len(np.INFO.Hooks))
 				if len(np.INFO.Hooks) != 0 {
 					return errors.New("Wrong hook at Info level")
 				}
@@ -65,7 +64,7 @@ func TestNotepad_AddHook(t *testing.T) {
 		{
 			"New Hook add with error",
 			func() error {
-				fmt.Printf("Took panic hooks: %#v with len %d\n", np.PANIC.Hooks, len(np.PANIC.Hooks))
+				// fmt.Printf("Took panic hooks: %#v with len %d\n", np.PANIC.Hooks, len(np.PANIC.Hooks))
 				if len(np.PANIC.Hooks) != 0 {
 					return errors.New("Wrong hook at Panic level")
 				}

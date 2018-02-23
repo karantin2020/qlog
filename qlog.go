@@ -98,6 +98,9 @@ type LogConfig struct {
 }
 
 func (l *Logger) AddHook(h Hook) {
+	// fmt.Printf("Took hook: %#v\n", h)
+	// fmt.Printf("Took logger: %#v\n", l)
+	// fmt.Printf("Took logger hooks: %#v\n", l.Hooks)
 	l.Hooks = append(l.Hooks, h)
 }
 
@@ -177,7 +180,8 @@ func (np *Notepad) SetLevel(lvl uint8) {
 
 func (np *Notepad) AddHook(lvl uint8, h Hook) {
 	for t, logger := range np.Loggers {
-		if lvl >= uint8(t) {
+		// fmt.Printf("In AddHook took logger: %#v\n", *logger)
+		if *logger != nil && uint8(t) >= lvl {
 			(*logger).AddHook(h)
 		}
 	}
@@ -214,9 +218,9 @@ func (np *Notepad) Timestamp() *Notepad {
 	return np
 }
 
-func NewLogger(pn *Notepad, level uint8) *Logger {
+func NewLogger(np *Notepad, level uint8) *Logger {
 	lgr := &Logger{
-		Notepad: pn,
+		Notepad: np,
 		Hooks:   make([]Hook, 0, 3),
 		Level:   InitLevel(level),
 		// Context: make([]Field, 0, 10),

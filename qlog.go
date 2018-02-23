@@ -103,9 +103,7 @@ func (l *Logger) AddHook(h Hook) {
 
 // New func returns new instance of notepad
 func New(lvl uint8 /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/) *Notepad {
-	if lvl > _maxLevel || lvl < _minLevel {
-		panic("Logging level is out of range")
-	}
+	chkLevel(lvl)
 	n := &Notepad{}
 	n.Loggers = [7]**Logger{&n.DEBUG, &n.INFO, &n.WARN, &n.ERROR, &n.CRITICAL, &n.PANIC, &n.FATAL}
 	n.Level = InitLevel(lvl)
@@ -169,6 +167,12 @@ func (n *Notepad) free() {
 	// for i := range n.CtxBuffer {
 	// 	n.CtxBuffer[i].Free()
 	// }
+}
+
+func (np *Notepad) SetLevel(lvl uint8) {
+	chkLevel(lvl)
+	np.Level = InitLevel(lvl)
+	np.init()
 }
 
 func (np *Notepad) AddHook(lvl uint8, h Hook) {
@@ -321,4 +325,10 @@ func (l *Logger) Msg(msg string) {
 
 func (l *Logger) Msgf(format string, a ...interface{}) {
 	l.Msg(fmt.Sprintf(format, a...))
+}
+
+func chkLevel(lvl uint8) {
+	if lvl > _maxLevel || lvl < _minLevel {
+		panic("Logging level is out of range")
+	}
 }

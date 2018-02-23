@@ -73,6 +73,11 @@ func reloadDefaultNotepad() {
 // flog.Info("hello world")
 // Output: {"level":"info","time":2017-11-04T15:09:54+00:00,"message":"hello world","module":"foo"}
 
+func SetLevel(lvl uint8) {
+	defaultNotepad.SetLevel(lvl)
+	np.Level = InitLevel(lvl)
+	reloadDefaultNotepad()
+}
 func WithFields(flds ...qlog.F) *qlog.Notepad {
 	return defaultNotepad.WithFields(flds...)
 }

@@ -117,6 +117,10 @@ func (e *Entry) Reset() {
 	e.bufferLevel = nil
 }
 
+func (e *Entry) Free() {
+	entryPool.Put(e)
+}
+
 func (e *Entry) Fields(fields ...F) {
 	for _, fld := range fields {
 		e.AddField(fld)

@@ -57,7 +57,6 @@ func reloadDefaultNotepad() {
 // New Log instance to manage different outputs
 // logger := qlog.New(qlog.InfoLevel).
 // 	SetOutput(Template("${time}\t${level}\t${source}\t${message}\t${fields}"), ...).
-// 	Timestamp().
 // 	WithFields(
 // 		qlog.F{"module", "main"},
 // 	)

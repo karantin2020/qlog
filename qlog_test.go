@@ -76,6 +76,7 @@ func TestNotepad_AddHook(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.fn()
+			// fmt.Printf("Add hook error: %#v\n", err)
 			if err != nil && !tt.wantError {
 				t.Errorf("Got error %v", err)
 			}

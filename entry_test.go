@@ -56,3 +56,15 @@ func TestLogger_NewEntry(t *testing.T) {
 	e2.Free()
 	e3.Free()
 }
+
+func TestEntry_Info(t *testing.T) {
+	np := qlog.New(qlog.InfoLevel)
+	msg := "Check entry message"
+	hook := qlog.Hook(func(e *qlog.Entry) {
+		assert.Equal(t, e.Message, []byte(msg))
+	})
+	np.AddHook(qlog.InfoLevel, hook)
+	t.Run("Check entry message", func(t *testing.T) {
+		np.Info(msg)
+	})
+}

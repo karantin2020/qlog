@@ -179,17 +179,17 @@ func (np *Notepad) SetLevel(lvl uint8) {
 }
 
 func (np *Notepad) AddHook(lvl uint8, h Hook) {
-	for t, logger := range np.Loggers {
-		// fmt.Printf("In AddHook took logger: %#v\n", *logger)
-		if *logger != nil && uint8(t) >= lvl {
-			(*logger).AddHook(h)
-		}
-	}
+	chkLevel(lvl)
+	(*np.Loggers[int(lvl)]).AddHook(h)
 }
 
-func (np *Notepad) AddHooks(hs ...Hook) *Notepad {
-	for _, h := range hs {
-		np.AddHook(np.Level.n, h)
+func (np *Notepad) AddHooks(lvl uint8, hs ...Hook) *Notepad {
+	for t, logger := range np.Loggers {
+		if *logger != nil && uint8(t) >= lvl {
+			for _, h := range hs {
+				np.AddHook(np.Level.n, h)
+			}
+		}
 	}
 	return np
 }

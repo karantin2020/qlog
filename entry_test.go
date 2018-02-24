@@ -2,7 +2,6 @@ package qlog_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/karantin2020/qlog"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +10,7 @@ import (
 func TestLogger_NewEntry(t *testing.T) {
 	lgr := qlog.New(qlog.InfoLevel)
 	e1 := lgr.INFO.NewEntry()
-	time.Sleep(time.Millisecond * 20)
+	// time.Sleep(time.Millisecond)
 	e2 := lgr.INFO.NewEntry()
 	e3 := lgr.WARN.NewEntry()
 	tests := []struct {
@@ -40,6 +39,14 @@ func TestLogger_NewEntry(t *testing.T) {
 			"Check entry time",
 			func() error {
 				assert.Equal(t, e3.Time.After(e2.Time), true)
+				return nil
+			},
+			false,
+		},
+		{
+			"Check entry time with error",
+			func() error {
+				assert.Equal(t, e2.Time.After(e3.Time), false)
 				return nil
 			},
 			false,

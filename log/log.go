@@ -74,7 +74,7 @@ func reloadDefaultNotepad() {
 
 func SetLevel(lvl uint8) {
 	defaultNotepad.SetLevel(lvl)
-	np.Level = InitLevel(lvl)
+	defaultNotepad.Level = qlog.InitLevel(lvl)
 	reloadDefaultNotepad()
 }
 func WithFields(flds ...qlog.F) *qlog.Notepad {

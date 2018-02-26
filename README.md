@@ -7,7 +7,7 @@ Like zap or zerolog but more flexible
 
 `go get -u github.com/karantin2020/qlog`
 
-Library supports go version => 1.9 because of type alias usage.
+Library was tested with go versions => 1.9.
 
 ## Quick Start
 

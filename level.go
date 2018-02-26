@@ -42,6 +42,14 @@ var (
 	_critical = []byte("critical")
 	_panic    = []byte("panic")
 	_fatal    = []byte("fatal")
+
+	_DEBUG    = []byte("DEBUG")
+	_INFO     = []byte("INFO")
+	_WARN     = []byte("WARN")
+	_ERROR    = []byte("ERROR")
+	_CRITICAL = []byte("CRITICAL")
+	_PANIC    = []byte("PANIC")
+	_FATAL    = []byte("FATAL")
 )
 
 func InitLevel(lvl uint8) Level {
@@ -135,6 +143,30 @@ func (l Level) CapitalString() string {
 		return "FATAL"
 	default:
 		return fmt.Sprintf("LEVEL(%d)", l)
+	}
+}
+
+// CapitalBytes returns an all-caps ASCII representation of the log level in []byte.
+func (l Level) CapitalBytes() []byte {
+	// Printing levels in all-caps is common enough that we should export this
+	// functionality.
+	switch l.n {
+	case DebugLevel:
+		return _DEBUG
+	case InfoLevel:
+		return _INFO
+	case WarnLevel:
+		return _WARN
+	case ErrorLevel:
+		return _ERROR
+	case CriticalLevel:
+		return _CRITICAL
+	case PanicLevel:
+		return _PANIC
+	case FatalLevel:
+		return _FATAL
+	default:
+		return Str2Bytes(fmt.Sprintf("LEVEL(%d)", l))
 	}
 }
 

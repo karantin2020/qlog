@@ -151,7 +151,12 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 					case topts.TimestampName:
 						outBytes = e.bufferTime
 					case topts.LevelName:
-						outBytes = e.bufferLevel
+						if upper {
+							outBytes = e.Logger.Level.CapitalBytes()
+							upper = false
+						} else {
+							outBytes = e.Logger.Level.ToBytes()
+						}
 					case topts.MessageName:
 						outBytes = e.Message
 					case topts.ErrorName:

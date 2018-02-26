@@ -57,14 +57,14 @@ type Entry struct {
 	Message  []byte
 	ErrorFld error
 
-	bufferTime  []byte
-	bufferLevel []byte
+	bufferTime []byte
+	// bufferLevel []byte
 
-	st_data        [fieldsLen]Field
-	st_name        [nameLen]byte
-	st_message     [messageLen]byte
-	st_bufferTime  [timeLen]byte
-	st_bufferLevel []byte
+	st_data       [fieldsLen]Field
+	st_name       [nameLen]byte
+	st_message    [messageLen]byte
+	st_bufferTime [timeLen]byte
+	// st_bufferLevel []byte
 }
 
 // A Field is a marshaling struct type used to add a key-value pair to a logger's
@@ -98,7 +98,7 @@ func (l *Logger) NewEntry() *Entry {
 	entry.Logger = l
 	entry.bufferTime = entry.Time.AppendFormat(entry.bufferTime, entry.Logger.Notepad.Options.TimeFieldFormat)
 	// entry.Level = l.Level
-	entry.bufferLevel = l.Level.b
+	// entry.bufferLevel = l.Level.b
 	return entry
 }
 
@@ -114,7 +114,7 @@ func (e *Entry) Reset() {
 	e.Name = e.st_name[:0]
 	e.Message = e.st_message[:0]
 	e.bufferTime = e.st_bufferTime[:0]
-	e.bufferLevel = nil
+	// e.bufferLevel = nil
 }
 
 func (e *Entry) Free() {

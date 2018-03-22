@@ -9,7 +9,7 @@ import (
 
 func example_new() {
 	nlog := qlog.New(qlog.InfoLevel).
-		SetOutput(qlog.Template("${time}\t${LEVEL}\t${message}\t${fields}\n"))
+		SetOutput(qlog.ColorTemplate)
 	// fmt.Printf("%+v\n", nlog)
 	nlog.INFO.Msgf("failed to fetch %s", "URL")
 	time.Sleep(time.Millisecond * 200)

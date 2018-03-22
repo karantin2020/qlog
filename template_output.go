@@ -34,6 +34,11 @@ var (
 	bPool *sync.Pool
 )
 
+var (
+	DefaultTemplate = Template("${time}\t${LEVEL}\t${message}\t${fields}\n")
+	ColorTemplate   = Template("\x1b[36m${time}\x1b[0m\t\x1b[33m${LEVEL}\x1b[0m\t\x1b[32m${message}\x1b[0m\t${fields}\n")
+)
+
 type iBuffer struct {
 	fb  []byte
 	fbt [256]byte

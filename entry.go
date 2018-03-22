@@ -19,7 +19,7 @@ const (
 	nameLen    = 32
 	messageLen = 256
 	timeLen    = 32
-	levelLen   = 10
+	// levelLen   = 10
 )
 
 func init() {
@@ -30,7 +30,7 @@ func init() {
 			// 	st_name:        make([]byte, 0, nameLen),
 			// 	st_message:     make([]byte, 0, messageLen),
 			// 	st_bufferTime:  make([]byte, 0, timeLen),
-			// 	st_bufferLevel: make([]byte, 0, levelLen),
+			//  st_bufferLevel: make([]byte, 0, levelLen),
 			// }
 			return new(Entry)
 		},

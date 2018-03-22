@@ -70,7 +70,7 @@ import (
 
 func example_new() {
 	nlog := qlog.New(InfoLevel).
-		SetOutput(Template("${time}\t${LEVEL}\t${message}\t${fields}\n")
+		SetOutput(qlog.Template("${time}\t${LEVEL}\t${message}\t${fields}\n"))
 	nlog.INFO.Msgf("failed to fetch %s", "URL")
 	nlog.INFO.Msg("failed to fetch 'URL'")
 
@@ -95,6 +95,9 @@ Output is:
 qlog.Template takes template string as the first argument. Substrings in ${...} are interpreted 
 as field names or reserved words (fields, message...). If fields name (${...}) is in capital case
 then output will be formatted in capital case too (see level name in examples).
+
+Instead of using `qlog.Template("${time}\t${LEVEL}\t${message}\t${fields}\n")` you can use variables
+`qlog.DefaultTemplate` and `qlog.ColorTemplate`.
 
 See documentation in code.
 

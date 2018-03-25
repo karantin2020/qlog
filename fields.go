@@ -3,7 +3,6 @@ package qlog
 import (
 	"bytes"
 	"fmt"
-	// "github.com/karantin2020/qlog/buffer"
 	"math"
 	"strconv"
 	"time"

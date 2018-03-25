@@ -1,9 +1,7 @@
 package log
 
 import (
-	// "fmt"
 	"github.com/karantin2020/qlog"
-	// "github.com/pkg/errors"
 )
 
 var (

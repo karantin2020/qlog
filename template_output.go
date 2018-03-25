@@ -81,8 +81,7 @@ func (pl PairList) String() string {
 	for i, _ := range pl {
 		bb.Write([]byte{'"'})
 		bb.Write(pl[i].Key)
-		bb.Write([]byte{'"'})
-		bb.Write([]byte{':'})
+		bb.Write([]byte{'"', ':'})
 		bb.Write(pl[i].Value)
 		if i < len(pl)-1 {
 			bb.Write([]byte{','})
@@ -181,7 +180,7 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 				})
 				buf.free()
 				if err != nil {
-					panic(fmt.Sprintf("unexpected error: %s", err))
+					panic(fmt.Sprintf("qlog template logging error: %s", err))
 				}
 			}
 		}

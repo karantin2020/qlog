@@ -8,7 +8,7 @@ import (
 )
 
 func example_new() {
-	nlog := qlog.New(qlog.InfoLevel).
+	nlog := qlog.New("newInst", qlog.InfoLevel).
 		SetOutput(qlog.ColorTemplate)
 	// fmt.Printf("%+v\n", nlog)
 	nlog.INFO.Msgf("failed to fetch %s", "URL")
@@ -22,4 +22,11 @@ func example_new() {
 	// fmt.Printf("%+v\n", newlog)
 	newlog.INFO.Msgf("failed to fetch %s", "URL")
 	newlog.INFO.Msg("failed to fetch 'URL'")
+
+	newlog2 := nlog.WithFields(
+		qlog.F{Key: "kara", Value: 123},
+	)
+	newlog2.Name = []byte("nInst2")
+	newlog2.INFO.Msgf("test sublogger %d", 123)
+	newlog2.WARN.Msg("End of sublogger test")
 }

@@ -40,6 +40,8 @@ type Notepad struct {
 	LOG *Logger
 	// Level is min log level to use
 	Level Level
+	// Notepad name field
+	Name []byte
 	// All log entries pass through the formatter before logged to Out. The
 	// included formatters are `TextFormatter` and `JSONFormatter` for which
 	// TextFormatter is the default. In development (when a TTY is attached) it
@@ -105,9 +107,10 @@ func (l *Logger) AddHook(h Hook) {
 }
 
 // New func returns new instance of notepad
-func New(lvl uint8 /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/) *Notepad {
+func New(name string, lvl uint8 /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/) *Notepad {
 	chkLevel(lvl)
 	n := &Notepad{}
+	n.Name = []byte(name)
 	n.Loggers = [7]**Logger{&n.DEBUG, &n.INFO, &n.WARN, &n.ERROR, &n.CRITICAL, &n.PANIC, &n.FATAL}
 	n.Level = InitLevel(lvl)
 	n.Formatter = make([]Formatter, 0, 3)

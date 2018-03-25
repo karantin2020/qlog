@@ -19,6 +19,7 @@ type TemplateOptions struct {
 	OutHandle       io.Writer
 	ErrLevel        uint8
 	OutLevel        uint8
+	LogName         string
 	TimestampName   string
 	LevelName       string
 	MessageName     string
@@ -35,8 +36,8 @@ var (
 )
 
 var (
-	DefaultTemplate = Template("${time}\t${LEVEL}\t${message}\t${fields}\n")
-	ColorTemplate   = Template("\x1b[36m${time}\x1b[0m\t\x1b[33m${LEVEL}\x1b[0m\t\x1b[32m${message}\x1b[0m\t${fields}\n")
+	DefaultTemplate = Template("[${name}] ${time}\t${LEVEL}\t${message}\t${fields}\n")
+	ColorTemplate   = Template("[${name}] \x1b[36m${time}\x1b[0m\t\x1b[33m${LEVEL}\x1b[0m\t\x1b[32m${message}\x1b[0m\t${fields}\n")
 )
 
 type iBuffer struct {
@@ -153,6 +154,8 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 					upper := options.upperTags[tag]
 					var outBytes []byte
 					switch tag {
+					case topts.LogName:
+						outBytes = e.Logger.Notepad.Name
 					case topts.TimestampName:
 						outBytes = e.bufferTime
 					case topts.LevelName:
@@ -201,6 +204,7 @@ func defaultTemplateOptions() *TemplateOptions {
 		OutHandle:       os.Stdout,
 		ErrLevel:        ErrorLevel,
 		OutLevel:        InfoLevel,
+		LogName:         "name",
 		TimestampName:   "time",
 		LevelName:       "level",
 		MessageName:     "message",

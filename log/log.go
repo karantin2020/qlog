@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	defaultNotepad = qlog.New(qlog.InfoLevel).
+	defaultNotepad = qlog.New("", qlog.InfoLevel).
 		SetOutput(qlog.Template("${time}\t${LEVEL}\t${message}\t${fields}\n"))
 	reloadDefaultNotepad()
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func TestLogger_NewEntry(t *testing.T) {
-	lgr := qlog.New(qlog.InfoLevel)
+	lgr := qlog.New("", qlog.InfoLevel)
 	e1 := lgr.INFO.NewEntry()
 	// time.Sleep(time.Millisecond)
 	e2 := lgr.INFO.NewEntry()
@@ -65,7 +65,7 @@ func TestLogger_NewEntry(t *testing.T) {
 }
 
 func TestEntry_Info(t *testing.T) {
-	np := qlog.New(qlog.InfoLevel)
+	np := qlog.New("", qlog.InfoLevel)
 	msg := "Check entry message"
 	hook := qlog.Hook(func(e *qlog.Entry) {
 		assert.Equal(t, e.Message, []byte(msg))

@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 					t.Fatalf("Want New Notepad, got panic: %#v", p)
 				}
 			}()
-			if got := qlog.New(tt.args.lvl); !reflect.DeepEqual(got, tt.want) {
+			if got := qlog.New("", tt.args.lvl); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestNotepad_AddHook(t *testing.T) {
-	np := qlog.New(qlog.InfoLevel)
+	np := qlog.New("", qlog.InfoLevel)
 	hook := qlog.Hook(func(e *qlog.Entry) {})
 	tests := []struct {
 		name      string

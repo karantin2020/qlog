@@ -51,8 +51,8 @@ func init() {
 type Entry struct {
 	Logger *Logger
 	Data   []Field
-	Name   []byte
-	Time   time.Time
+	// Name   []byte
+	Time time.Time
 	// Level    Level
 	Message  []byte
 	ErrorFld error
@@ -60,8 +60,8 @@ type Entry struct {
 	bufferTime []byte
 	// bufferLevel []byte
 
-	st_data       [fieldsLen]Field
-	st_name       [nameLen]byte
+	st_data [fieldsLen]Field
+	// st_name       [nameLen]byte
 	st_message    [messageLen]byte
 	st_bufferTime [timeLen]byte
 	// st_bufferLevel []byte
@@ -111,7 +111,7 @@ func (e *Entry) Reset() {
 	// e.bufferTime = e.bufferTime[:0]
 	// e.bufferLevel = e.bufferLevel[:0]
 	e.Data = e.st_data[:0]
-	e.Name = e.st_name[:0]
+	// e.Name = e.st_name[:0]
 	e.Message = e.st_message[:0]
 	e.bufferTime = e.st_bufferTime[:0]
 	// e.bufferLevel = nil

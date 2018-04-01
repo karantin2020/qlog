@@ -139,7 +139,7 @@ func (e *Entry) Warn(msg string) {
 
 func (e *Entry) errMsg(msg string, panicErr, exitErr bool) {
 	e.ErrorFld = e.Logger.Notepad.Options.ErrorFunc(msg)
-	e.AddField(F{Key: e.Logger.Notepad.Options.ErrorFieldName, Value: e.ErrorFld})
+	// e.AddField(F{Key: e.Logger.Notepad.Options.ErrorFieldName, Value: e.ErrorFld})
 	e.Message = append(e.Message, Str2Bytes(e.ErrorFld.Error())...)
 	e.Process()
 	if panicErr {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 )
 
 type JsonOptions struct {
@@ -40,16 +41,22 @@ func Json(opts ...func(*JsonOptions) error) func(np *Notepad) {
 				bb := bufferPool.Get().(*bytes.Buffer)
 				bb.Reset()
 				bb.Write([]byte{'{'})
-				for i, _ := range e.Data {
-					bb.Write([]byte{'"'})
-					bb.Write(Str2Bytes(e.Data[i].Key))
-					bb.Write([]byte{'"', ':'})
-					bb.Write(e.Data[i].Buffer.Bytes())
-					if i < len(e.Data)-1 {
-						bb.Write([]byte{','})
-					}
+				writeFieldFirst(bb, Str2Bytes(topts.LogName), e.Logger.Notepad.Name)
+				buf := newBuffer()
+				buf.fb = strconv.AppendInt(buf.fb, e.Time.UnixNano(), 10)
+				writeField(bb, Str2Bytes(topts.TimestampName), buf.fb)
+				buf.free()
+				writeField(bb, Str2Bytes(topts.LevelName), e.Logger.Level.ToBytes())
+				writeField(bb, Str2Bytes(topts.MessageName), e.Message)
+				if e.ErrorFld != nil {
+					writeField(bb, Str2Bytes(topts.ErrorName), Str2Bytes(e.ErrorFld.Error()))
 				}
-				bb.Write([]byte{'}'})
+
+				writeData(bb, e.Logger.Notepad.Context)
+				writeData(bb, e.Logger.Context)
+				writeData(bb, e.Data)
+
+				bb.Write([]byte{'}', '\n'})
 				if _, err := wio.Write(bb.Bytes()); err != nil {
 					panic(fmt.Sprintf("qlog json logging error: %s", err))
 				}
@@ -75,11 +82,34 @@ func defaultJsonOptions() *JsonOptions {
 		OutHandle:     os.Stdout,
 		ErrLevel:      ErrorLevel,
 		OutLevel:      InfoLevel,
-		LogName:       "name",
-		TimestampName: "time",
-		LevelName:     "level",
-		MessageName:   "message",
-		FieldsName:    "fields",
-		ErrorName:     "error",
+		LogName:       "n",
+		TimestampName: "t",
+		LevelName:     "l",
+		MessageName:   "m",
+		FieldsName:    "f",
+		ErrorName:     "e",
+	}
+}
+
+func writeFieldFirst(w io.Writer, name, content []byte) {
+	w.Write([]byte{'"'})
+	w.Write(name)
+	w.Write([]byte{'"', ':'})
+	w.Write([]byte{'"'})
+	w.Write(content)
+	w.Write([]byte{'"'})
+}
+
+func writeField(w io.Writer, name, content []byte) {
+	w.Write([]byte{','})
+	writeFieldFirst(w, name, content)
+}
+
+func writeData(w io.Writer, data []Field) {
+	for i, _ := range data {
+		w.Write([]byte{',', '"'})
+		w.Write(Str2Bytes(data[i].Key))
+		w.Write([]byte{'"', ':'})
+		w.Write(data[i].Buffer.Bytes())
 	}
 }

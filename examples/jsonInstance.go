@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/karantin2020/qlog"
 )
 
@@ -11,7 +9,7 @@ func json_new() {
 		SetOutput(qlog.Json())
 	// fmt.Printf("%+v\n", nlog)
 	nlog.ERROR.Msgf("failed to fetch %s", "URL")
-	time.Sleep(time.Millisecond * 200)
+	// time.Sleep(time.Millisecond * 200)
 	nlog.INFO.Msg("failed to fetch 'URL'")
 
 	newlog := nlog.WithFields(
@@ -21,4 +19,5 @@ func json_new() {
 	// fmt.Printf("%+v\n", newlog)
 	newlog.INFO.Msgf("failed to fetch %s", "URL")
 	newlog.INFO.Msg("failed to fetch 'URL'")
+	nlog.Panic("failed to fetch URL")
 }

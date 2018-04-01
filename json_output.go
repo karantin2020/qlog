@@ -48,9 +48,9 @@ func Json(opts ...func(*JsonOptions) error) func(np *Notepad) {
 				buf.free()
 				writeField(bb, Str2Bytes(topts.LevelName), e.Logger.Level.ToBytes())
 				writeField(bb, Str2Bytes(topts.MessageName), e.Message)
-				if e.ErrorFld != nil {
-					writeField(bb, Str2Bytes(topts.ErrorName), Str2Bytes(e.ErrorFld.Error()))
-				}
+				// if e.ErrorFld != nil {
+				// 	writeField(bb, Str2Bytes(topts.ErrorName), Str2Bytes(e.ErrorFld.Error()))
+				// }
 
 				writeData(bb, e.Logger.Notepad.Context)
 				writeData(bb, e.Logger.Context)

@@ -1,9 +1,6 @@
 package main
 
 import (
-	// "fmt"
-	"time"
-
 	"github.com/karantin2020/qlog"
 )
 
@@ -12,7 +9,7 @@ func example_new() {
 		SetOutput(qlog.ColorTemplate)
 	// fmt.Printf("%+v\n", nlog)
 	nlog.INFO.Msgf("failed to fetch %s", "URL")
-	time.Sleep(time.Millisecond * 200)
+	// time.Sleep(time.Millisecond * 200)
 	nlog.INFO.Msg("failed to fetch 'URL'")
 
 	newlog := nlog.WithFields(

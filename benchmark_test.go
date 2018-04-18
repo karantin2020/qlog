@@ -218,21 +218,3 @@ func BenchmarkJsonInfo(b *testing.B) {
 		}
 	})
 }
-
-// func BenchmarkJsonDiscard(b *testing.B) {
-// 	log := New("testLog", InfoLevel).
-// 		SetOutput(func(np *Notepad) {
-// 			for t, logger := range np.Loggers {
-// 				level := uint8(t)
-// 				if level >= np.Level.n {
-// 					(*logger).Output = append((*logger).Output, func(*Entry) {})
-// 				}
-// 			}
-// 		})
-// 	b.ResetTimer()
-// 	b.RunParallel(func(pb *testing.PB) {
-// 		for pb.Next() {
-// 			log.Info(fakeMessage)
-// 		}
-// 	})
-// }

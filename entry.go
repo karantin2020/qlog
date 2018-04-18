@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -76,7 +77,19 @@ func (l *Logger) NewEntry() *Entry {
 	entry.Reset()
 	entry.Time = time.Now()
 	entry.Logger = l
-	entry.bufferTime = entry.Time.AppendFormat(entry.bufferTime, entry.Logger.Notepad.Options.TimeFieldFormat)
+	switch entry.Logger.Notepad.Options.TimeFieldFormat {
+	case "", "Unix":
+		entry.bufferTime = strconv.AppendInt(entry.bufferTime, entry.Time.Unix(), 10)
+	case "UnixNano":
+		entry.bufferTime = strconv.AppendInt(entry.bufferTime, entry.Time.UnixNano(), 10)
+	case "UnixMilli":
+		entry.bufferTime = strconv.AppendInt(entry.bufferTime, entry.Time.UnixNano()/1000000, 10)
+	case "UnixMicro":
+		entry.bufferTime = strconv.AppendInt(entry.bufferTime, entry.Time.UnixNano()/1000, 10)
+	default:
+		entry.bufferTime = entry.Time.AppendFormat(entry.bufferTime, entry.Logger.Notepad.Options.TimeFieldFormat)
+	}
+	// entry.bufferTime = entry.Time.AppendFormat(entry.bufferTime, entry.Logger.Notepad.Options.TimeFieldFormat)
 	return entry
 }
 

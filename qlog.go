@@ -80,8 +80,12 @@ type LogConfig struct {
 	ErrorFunc func(string) error
 
 	// TimeFieldFormat defines the time format of the Time field type.
-	// If set to an empty string, the time is formatted as an UNIX timestamp
-	// as integer.
+	// Possible values are:
+	// -  predefined time pkg layouts for use in Time.Format and time.Parse
+	// -  "Unix" (formats as strconv Int with Time.Unix())
+	// -  "UnixNano" (formats as strconv Int with Time.UnixNano())
+	// -  "UnixMilli" (formats as strconv Int with Time.UnixNano()/1000000)
+	// -  "UnixMicro" (formats as strconv Int with Time.UnixNano()/1000)
 	TimeFieldFormat string // time.RFC3339
 
 	// TimestampFunc defines the function called to generate a timestamp.
@@ -107,7 +111,7 @@ func (l *Logger) AddHook(h Hook) {
 }
 
 // New func returns new instance of notepad
-func New(name string, lvl uint8 /*outLevel, errLevel Level, outHandle, errHandle io.Writer*/) *Notepad {
+func New(name string, lvl uint8, opts ...func(*LogConfig) error) *Notepad {
 	chkLevel(lvl)
 	n := &Notepad{}
 	n.Name = []byte(name)
@@ -128,6 +132,9 @@ func New(name string, lvl uint8 /*outLevel, errLevel Level, outHandle, errHandle
 		DurationFieldUnit:    time.Millisecond,
 		DurationFieldInteger: true,
 		InterfaceMarshaler:   json.Marshal,
+	}
+	for _, fn := range opts {
+		fn(&n.Options)
 	}
 	n.LOG = n.DEBUG
 	n.init()
@@ -173,6 +180,18 @@ func (n *Notepad) free() {
 	// for i := range n.CtxBuffer {
 	// 	n.CtxBuffer[i].Free()
 	// }
+}
+
+func TimeFormat(format string) func(*LogConfig) error {
+	return func(lc *LogConfig) error {
+		lc.TimeFieldFormat = format
+		return nil
+	}
+}
+
+func (np *Notepad) SetTimeFormat(format string) *Notepad {
+	np.Options.TimeFieldFormat = format
+	return np
 }
 
 func (np *Notepad) SetLevel(lvl uint8) {
@@ -263,64 +282,88 @@ func (np *Notepad) Debug(msg string) {
 	if np.DEBUG == nil {
 		return
 	}
-	e := np.DEBUG.NewEntry()
-	e.Debug(msg)
+	np.DEBUG.NewEntry().Debug(msg)
+}
+
+func (np *Notepad) Debugf(format string, a ...interface{}) {
+	np.Debug(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Info(msg string) {
 	if np.INFO == nil {
 		return
 	}
-	e := np.INFO.NewEntry()
-	e.Info(msg)
+	np.INFO.NewEntry().Info(msg)
+}
+
+func (np *Notepad) Infof(format string, a ...interface{}) {
+	np.Info(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Warn(msg string) {
 	if np.WARN == nil {
 		return
 	}
-	e := np.WARN.NewEntry()
-	e.Warn(msg)
+	np.WARN.NewEntry().Warn(msg)
+}
+
+func (np *Notepad) Warnf(format string, a ...interface{}) {
+	np.Warn(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Error(msg string) {
 	if np.ERROR == nil {
 		return
 	}
-	e := np.ERROR.NewEntry()
-	e.Error(msg)
+	np.ERROR.NewEntry().Error(msg)
+}
+
+func (np *Notepad) Errorf(format string, a ...interface{}) {
+	np.Error(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Critical(msg string) {
 	if np.CRITICAL == nil {
 		return
 	}
-	e := np.CRITICAL.NewEntry()
-	e.Critical(msg)
+	np.CRITICAL.NewEntry().Critical(msg)
+}
+
+func (np *Notepad) Criticalf(format string, a ...interface{}) {
+	np.Critical(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Panic(msg string) {
 	if np.PANIC == nil {
 		return
 	}
-	e := np.PANIC.NewEntry()
-	e.Panic(msg)
+	np.PANIC.NewEntry().Panic(msg)
+}
+
+func (np *Notepad) Panicf(format string, a ...interface{}) {
+	np.Panic(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Fatal(msg string) {
 	if np.FATAL == nil {
 		return
 	}
-	e := np.FATAL.NewEntry()
-	e.Fatal(msg)
+	np.FATAL.NewEntry().Fatal(msg)
+}
+
+func (np *Notepad) Fatalf(format string, a ...interface{}) {
+	np.Fatal(fmt.Sprintf(format, a...))
 }
 
 func (np *Notepad) Log(msg string) {
 	if np.LOG == nil {
 		return
 	}
-	e := np.LOG.NewEntry()
-	e.Log(msg)
+	np.LOG.NewEntry().Log(msg)
+}
+
+func (np *Notepad) Logf(format string, a ...interface{}) {
+	np.Log(fmt.Sprintf(format, a...))
 }
 
 func (l *Logger) Msg(msg string) {

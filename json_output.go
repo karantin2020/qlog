@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 )
 
 type JsonOptions struct {
@@ -20,6 +19,15 @@ type JsonOptions struct {
 	ErrorName     string
 	FieldsName    string
 }
+
+var (
+	openBrac    = []byte{'{'}
+	closeBrac   = []byte{'}', '\n'}
+	quotes      = []byte{'"'}
+	kvDelim     = []byte{'"', ':'}
+	fieldsDelim = []byte{',', '"'}
+	comma       = []byte{','}
+)
 
 func Json(opts ...func(*JsonOptions) error) func(np *Notepad) {
 	options := defaultJsonOptions()
@@ -40,12 +48,12 @@ func Json(opts ...func(*JsonOptions) error) func(np *Notepad) {
 			return func(e *Entry) {
 				bb := bufferPool.Get().(*bytes.Buffer)
 				bb.Reset()
-				bb.Write([]byte{'{'})
+				bb.Write(openBrac)
 				writeFieldFirst(bb, Str2Bytes(topts.LogName), e.Logger.Notepad.Name)
-				buf := newBuffer()
-				buf.fb = strconv.AppendInt(buf.fb, e.Time.UnixNano(), 10)
-				writeField(bb, Str2Bytes(topts.TimestampName), buf.fb)
-				buf.free()
+				// buf := newBuffer()
+				// buf.fb = strconv.AppendInt(buf.fb, e.Time.UnixNano(), 10)
+				writeField(bb, Str2Bytes(topts.TimestampName), e.bufferTime)
+				// buf.free()
 				writeField(bb, Str2Bytes(topts.LevelName), e.Logger.Level.ToBytes())
 				writeField(bb, Str2Bytes(topts.MessageName), e.Message)
 				// if e.ErrorFld != nil {
@@ -56,7 +64,7 @@ func Json(opts ...func(*JsonOptions) error) func(np *Notepad) {
 				writeData(bb, e.Logger.Context)
 				writeData(bb, e.Data)
 
-				bb.Write([]byte{'}', '\n'})
+				bb.Write(closeBrac)
 				if _, err := wio.Write(bb.Bytes()); err != nil {
 					panic(fmt.Sprintf("qlog json logging error: %s", err))
 				}
@@ -92,24 +100,24 @@ func defaultJsonOptions() *JsonOptions {
 }
 
 func writeFieldFirst(w io.Writer, name, content []byte) {
-	w.Write([]byte{'"'})
+	w.Write(quotes)
 	w.Write(name)
-	w.Write([]byte{'"', ':'})
-	w.Write([]byte{'"'})
+	w.Write(kvDelim)
+	w.Write(quotes)
 	w.Write(content)
-	w.Write([]byte{'"'})
+	w.Write(quotes)
 }
 
 func writeField(w io.Writer, name, content []byte) {
-	w.Write([]byte{','})
+	w.Write(comma)
 	writeFieldFirst(w, name, content)
 }
 
 func writeData(w io.Writer, data []Field) {
 	for i, _ := range data {
-		w.Write([]byte{',', '"'})
+		w.Write(fieldsDelim)
 		w.Write(Str2Bytes(data[i].Key))
-		w.Write([]byte{'"', ':'})
+		w.Write(kvDelim)
 		w.Write(data[i].Buffer.Bytes())
 	}
 }

@@ -5,19 +5,18 @@ import (
 )
 
 func json_new() {
-	nlog := qlog.New("JSON", qlog.InfoLevel).
+	fakeMessage := "failed to fetch 'URL'"
+	nlog := qlog.New("JSON", qlog.InfoLevel, qlog.TimeFormat("UnixMicro")).
 		SetOutput(qlog.Json())
-	// fmt.Printf("%+v\n", nlog)
 	nlog.ERROR.Msgf("failed to fetch %s", "URL")
-	// time.Sleep(time.Millisecond * 200)
-	nlog.INFO.Msg("failed to fetch 'URL'")
+	nlog.INFO.Msg(fakeMessage)
+	nlog.Info(fakeMessage)
 
 	newlog := nlog.WithFields(
 		qlog.F{Key: "srv", Value: "new"},
 		qlog.F{Key: "src", Value: "after"},
-	)
-	// fmt.Printf("%+v\n", newlog)
-	newlog.INFO.Msgf("failed to fetch %s", "URL")
-	newlog.INFO.Msg("failed to fetch 'URL'")
-	nlog.Panic("failed to fetch URL")
+	).SetTimeFormat("Unix")
+	newlog.Infof("failed to fetch %s", "URL")
+	newlog.Info(fakeMessage)
+	nlog.Panic(fakeMessage)
 }

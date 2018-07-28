@@ -1,13 +1,11 @@
 package qlog
 
 import (
-	"errors"
 	"io/ioutil"
 	"testing"
 )
 
 var (
-	errExample  = errors.New("fail")
 	errMsg      = "fail"
 	fakeMessage = "Test logging, but use a somewhat realistic message length."
 )

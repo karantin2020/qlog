@@ -26,7 +26,7 @@ func TestBufferWrites(t *testing.T) {
 		{"AppendFloat64", func() { buf.AppendFloat(3.14, 64) }, "3.14"},
 		// Intenationally introduce some floating-point error.
 		{"AppendFloat32", func() { buf.AppendFloat(float64(float32(3.14)), 32) }, "3.14"},
-		{"AppendWrite", func() { buf.Write([]byte("foo")) }, "foo"},
+		{"AppendWrite", func() { _, _ = buf.Write([]byte("foo")) }, "foo"},
 	}
 
 	for _, tt := range tests {

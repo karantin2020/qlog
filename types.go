@@ -11,7 +11,7 @@ type FormatWriter interface {
 
 type Formatter func(*Entry)
 type Hook func(*Entry)
-type Output func(*Entry)
+type Output func(*Entry) // func(http.Handler) http.Handler
 
 // FlatMapS structure to store map[string]string-like data
 type FlatMapS struct {

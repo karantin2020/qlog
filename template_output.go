@@ -79,12 +79,12 @@ func (pl PairList) String() string {
 	bb.Reset()
 	bb.Write([]byte{'{'})
 	for i, _ := range pl {
-		bb.Write([]byte{'"'})
-		bb.Write(pl[i].Key)
-		bb.Write([]byte{'"', ':'})
-		bb.Write(pl[i].Value)
+		_, _ = bb.Write([]byte{'"'})
+		_, _ = bb.Write(pl[i].Key)
+		_, _ = bb.Write([]byte{'"', ':'})
+		_, _ = bb.Write(pl[i].Value)
 		if i < len(pl)-1 {
-			bb.Write([]byte{','})
+			_, _ = bb.Write([]byte{','})
 		}
 	}
 	bb.Write([]byte{'}'})
@@ -98,8 +98,7 @@ func (pl PairList) JSONByte(fb []byte, separator byte) []byte {
 	for i, _ := range pl {
 		fb = append(fb, '"')
 		fb = append(fb, pl[i].Key...)
-		fb = append(fb, '"')
-		fb = append(fb, separator)
+		fb = append(fb, '"', separator)
 		fb = append(fb, pl[i].Value...)
 		if i < len(pl)-1 {
 			fb = append(fb, ',')
@@ -111,8 +110,8 @@ func (pl PairList) JSONByte(fb []byte, separator byte) []byte {
 
 func Template(template string, opts ...func(*TemplateOptions) error) func(np *Notepad) {
 	options := defaultTemplateOptions()
-	for _, fn := range opts {
-		fn(options)
+	for i := range opts {
+		_ = opts[i](options)
 	}
 	t, err := fasttemplate.NewTemplate(template, "${", "}")
 	emptyByteSlice := []byte{}
@@ -127,6 +126,7 @@ func Template(template string, opts ...func(*TemplateOptions) error) func(np *No
 			}
 			break
 		}
+		continue
 	}
 	if err != nil {
 		panic("unexpected error when parsing template: " + err.Error())
@@ -242,14 +242,14 @@ func addFld(data []Field, buf []byte, sep byte) []byte {
 	return buf
 }
 
-func stringInSlice(a string, list []string) (int, bool) {
-	for i, b := range list {
-		if b == a {
-			return i, true
-		}
-	}
-	return -1, false
-}
+// func stringInSlice(a string, list []string) (int, bool) {
+// 	for i, b := range list {
+// 		if b == a {
+// 			return i, true
+// 		}
+// 	}
+// 	return -1, false
+// }
 
 func Str2Bytes(stringData string) []byte {
 	temporaryData := (*[2]uintptr)(unsafe.Pointer(&stringData))

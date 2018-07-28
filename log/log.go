@@ -82,24 +82,48 @@ func WithFields(flds ...qlog.F) *qlog.Notepad {
 func Debug(msg string) {
 	defaultNotepad.Debug(msg)
 }
+func Debugf(format string, a ...interface{}) {
+	defaultNotepad.Debugf(format, a...)
+}
 func Info(msg string) {
 	defaultNotepad.Info(msg)
+}
+func Infof(format string, a ...interface{}) {
+	defaultNotepad.Infof(format, a...)
 }
 func Warn(msg string) {
 	defaultNotepad.Warn(msg)
 }
+func Warnf(format string, a ...interface{}) {
+	defaultNotepad.Warnf(format, a...)
+}
 func Error(msg string) {
 	defaultNotepad.Error(msg)
+}
+func Errorf(format string, a ...interface{}) {
+	defaultNotepad.Errorf(format, a...)
 }
 func Critical(msg string) {
 	defaultNotepad.Critical(msg)
 }
+func Criticalf(format string, a ...interface{}) {
+	defaultNotepad.Criticalf(format, a...)
+}
 func Panic(msg string) {
 	defaultNotepad.Panic(msg)
+}
+func Panicf(format string, a ...interface{}) {
+	defaultNotepad.Panicf(format, a...)
 }
 func Fatal(msg string) {
 	defaultNotepad.Fatal(msg)
 }
+func Fatalf(format string, a ...interface{}) {
+	defaultNotepad.Fatalf(format, a...)
+}
 func Log(msg string) {
 	defaultNotepad.Log(msg)
+}
+func Logf(format string, a ...interface{}) {
+	defaultNotepad.Logf(format, a...)
 }
